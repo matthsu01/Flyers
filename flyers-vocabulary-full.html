@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flyers 單字練習 - 完整版</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        header p { font-size: 1.1rem; opacity: 0.9; }
+        
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item { text-align: center; color: white; }
+        .stat-num { font-size: 2rem; font-weight: bold; }
+        .stat-label { font-size: 0.9rem; opacity: 0.8; }
+        
+        .mode-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .mode-tab {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .mode-tab:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        
+        .mode-tab.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .section { display: none; animation: fadeIn 0.3s; }
+        .section.active { display: block; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Flashcard Styles */
+        .flashcard-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .flashcard {
+            width: 420px;
+            height: 380px;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+        
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        
+        .flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+        
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .flashcard-front { background: white; }
+        
+        .flashcard-back {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            transform: rotateY(180deg);
+        }
+        
+        .flashcard .word {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .flashcard .pos {
+            font-size: 1rem;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .flashcard-back .pos { color: rgba(255,255,255,0.8); }
+        .flashcard .chinese { font-size: 1.3rem; margin-top: 8px; }
+        
+        .flashcard-image {
+            width: 100%;
+            max-width: 180px;
+            height: 120px;
+            object-fit: contain;
+            border-radius: 12px;
+            margin: 12px 0;
+            background: #f5f5f5;
+            padding: 5px;
+        }
+        
+        .image-loading {
+            color: #999;
+            font-size: 0.9rem;
+            margin: 12px 0;
+        }
+        
+        .image-error {
+            color: #ccc;
+            font-size: 0.85rem;
+            margin: 12px 0;
+        }
+        
+        .speak-btn {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: transform 0.2s;
+        }
+        
+        .speak-btn:hover { transform: scale(1.2); }
+        
+        .flashcard-controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .control-btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        .control-btn.primary { background: white; color: #667eea; }
+        .control-btn.secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            max-width: 400px;
+            height: 8px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: white;
+            transition: width 0.3s;
+        }
+        
+        .progress-text { color: white; font-size: 0.95rem; }
+        
+        /* Filter Section */
+        .filter-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .filter-title {
+            font-size: 1.3rem;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .letter-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .letter-btn {
+            width: 45px;
+            height: 45px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            background: white;
+            color: #667eea;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .letter-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .letter-btn.selected {
+            background: #667eea;
+            color: white;
+        }
+        
+        .letter-count {
+            font-size: 0.7rem;
+            display: block;
+            margin-top: -2px;
+        }
+        
+        .filter-info {
+            text-align: center;
+            color: #666;
+            margin-top: 15px;
+            font-size: 0.95rem;
+        }
+        
+        /* Quiz Styles */
+        .quiz-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .quiz-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .quiz-score {
+            font-size: 1.3rem;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .quiz-question {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .quiz-question-num {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        
+        .quiz-chinese-hint {
+            text-align: center;
+            font-size: 1.5rem;
+            color: #555;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 12px;
+            border: 2px solid #667eea;
+        }
+        
+        .quiz-input-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .letter-box {
+            width: 50px;
+            height: 55px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1.5rem;
+            text-align: center;
+            text-transform: lowercase;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        
+        .letter-box:focus {
+            outline: none;
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .letter-box.correct {
+            border-color: #28a745;
+            background: #d4edda;
+            color: #28a745;
+        }
+        
+        .letter-box.wrong {
+            border-color: #dc3545;
+            background: #f8d7da;
+            color: #dc3545;
+        }
+        
+        .letter-box.hint {
+            border-color: #ffc107;
+            background: #fff3cd;
+        }
+        
+        .quiz-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .quiz-btn {
+            padding: 12px 35px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        .quiz-btn.check { background: #667eea; color: white; }
+        .quiz-btn.next { background: #28a745; color: white; }
+        .quiz-btn.restart { background: #6c757d; color: white; }
+        .quiz-btn.hint { background: #ffc107; color: #333; }
+        
+        .quiz-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .quiz-result {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .quiz-result h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .quiz-result-score {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #667eea;
+            margin: 20px 0;
+        }
+        
+        .quiz-result-message {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        /* Word List */
+        .word-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .word-item {
+            background: white;
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        
+        .word-item:hover { transform: translateY(-2px); }
+        .word-info { flex: 1; }
+        .word-info .num { color: #999; font-size: 0.8rem; }
+        .word-info .english { font-weight: bold; color: #333; font-size: 1.05rem; }
+        .word-info .chinese { color: #666; font-size: 0.9rem; margin-top: 4px; }
+        
+        .word-speak {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        
+        .word-speak:hover { opacity: 1; }
+        
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-bar input {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+        
+        .filter-bar input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        /* Responsive */
+        @media (max-width: 600px) {
+            .flashcard { width: 340px; height: 360px; }
+            .flashcard .word { font-size: 1.7rem; }
+            .flashcard-image { max-width: 140px; height: 100px; }
+            .letter-box { width: 40px; height: 45px; font-size: 1.2rem; }
+            .letter-btn { width: 38px; height: 38px; font-size: 0.95rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎓 Flyers 單字練習</h1>
+            <p>劍橋兒童英語認證 Flyers 完整單字表 | 540個核心單字</p>
+        </header>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-num">540</div>
+                <div class="stat-label">單字總數</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num" id="learned-count">0</div>
+                <div class="stat-label">已學習</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num" id="quiz-score">0</div>
+                <div class="stat-label">測驗得分</div>
+            </div>
+        </div>
+        
+        <div class="mode-tabs">
+            <button class="mode-tab active" onclick="switchMode('flashcard')">📇 單字卡</button>
+            <button class="mode-tab" onclick="switchMode('quiz')">📝 填空測驗</button>
+            <button class="mode-tab" onclick="switchMode('list')">📋 單字列表</button>
+        </div>
+        
+        <!-- Flashcard Section -->
+        <div id="flashcard-section" class="section active">
+            <div class="flashcard-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="flashcard-progress"></div>
+                </div>
+                <div class="progress-text" id="flashcard-progress-text">1 / 540</div>
+                
+                <div class="flashcard" id="flashcard" onclick="flipCard()">
+                    <div class="flashcard-inner">
+                        <div class="flashcard-front">
+                            <div class="word" id="card-word">a.m.</div>
+                            <div class="pos" id="card-pos">adv.</div>
+                            <div id="card-image-container" class="image-loading">🔄 載入圖片中...</div>
+                            <button class="speak-btn" id="speak-en-btn" onclick="event.stopPropagation(); speakCurrentEn()">🔊 英</button>
+                        </div>
+                        <div class="flashcard-back">
+                            <div class="word" id="card-word-back">a.m.</div>
+                            <div class="pos" id="card-pos-back">adv.</div>
+                            <div id="card-image-container-back" class="image-loading">🔄 載入圖片中...</div>
+                            <div class="chinese" id="card-chinese">上午</div>
+                            <button class="speak-btn" id="speak-zh-btn" onclick="event.stopPropagation(); speakCurrentZh()">🔊 中</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flashcard-controls">
+                    <button class="control-btn secondary" onclick="prevCard()">⬅️ 上一個</button>
+                    <button class="control-btn primary" onclick="speakCurrent()">🔊 發音</button>
+                    <button class="control-btn secondary" onclick="nextCard()">下一個 ➡️</button>
+                </div>
+                <div class="flashcard-controls">
+                    <button class="control-btn secondary" onclick="shuffleCards()">🔀 隨機排序</button>
+                    <button class="control-btn secondary" onclick="resetCards()">🔄 重置進度</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quiz Section -->
+        <div id="quiz-section" class="section">
+            <div class="filter-section">
+                <div class="filter-title">🎯 選擇要測驗的字母開頭的單字</div>
+                <div class="letter-grid" id="letter-grid"></div>
+                <div class="filter-info" id="filter-info">請選擇字母後開始測驗</div>
+            </div>
+            
+            <div class="quiz-container" id="quiz-container" style="display: none;">
+                <div class="quiz-header">
+                    <div class="quiz-score">得分: <span id="current-score">0</span> / <span id="total-questions">10</span></div>
+                </div>
+                <div id="quiz-content"></div>
+                <div class="quiz-actions" id="quiz-actions"></div>
+            </div>
+        </div>
+        
+        <!-- Word List Section -->
+        <div id="list-section" class="section">
+            <div class="filter-bar">
+                <input type="text" id="search-input" placeholder="搜尋單字（英文或中文）..." oninput="filterWords()">
+            </div>
+            <div class="word-list" id="word-list"></div>
+        </div>
+    </div>
+
+    <script>
+        // Vocabulary data extracted from PDF
+        const vocabulary = [
+            {num:1, word:"a.m.", pos:"adv.", chinese:"上午"}, {num:2, word:"across", pos:"prep.", chinese:"横过；越过；穿过"},
+            {num:3, word:"act", pos:"v.", chinese:"扮演"}, {num:4, word:"actor", pos:"n.", chinese:"男演员"},
+            {num:5, word:"actually", pos:"adv.", chinese:"实际上；事实上"}, {num:6, word:"adventure", pos:"n.", chinese:"冒险"},
+            {num:7, word:"after", pos:"adv./conj.", chinese:"之后；在……以后"}, {num:8, word:"ago", pos:"adv.", chinese:"以前"},
+            {num:9, word:"agree", pos:"v.", chinese:"同意；赞成"}, {num:10, word:"air", pos:"n.", chinese:"空气"},
+            {num:11, word:"airport", pos:"n.", chinese:"机场"}, {num:12, word:"alone", pos:"adj.", chinese:"单独的；独自的"},
+            {num:13, word:"already", pos:"adv.", chinese:"已经"}, {num:14, word:"also", pos:"adv.", chinese:"也"},
+            {num:15, word:"amazing", pos:"adj./excl.", chinese:"令人吃惊的；惊人的"}, {num:16, word:"ambulance", pos:"n.", chinese:"救护车"},
+            {num:17, word:"anyone", pos:"pron.", chinese:"任何人"}, {num:18, word:"anything", pos:"pron.", chinese:"任何东西；任何事"},
+            {num:19, word:"anywhere", pos:"adv.", chinese:"在任何地方；到任何地方"}, {num:20, word:"appear", pos:"v.", chinese:"出现"},
+            {num:21, word:"April", pos:"n.", chinese:"四月"}, {num:22, word:"arrive", pos:"v.", chinese:"到达"},
+            {num:23, word:"art", pos:"n.", chinese:"艺术；美术"}, {num:24, word:"artist", pos:"n.", chinese:"艺术家；画家；艺人"},
+            {num:25, word:"as", pos:"adv.", chinese:"……一样；如同"}, {num:26, word:"as ... as", pos:"adv.", chinese:"和……一样"},
+            {num:27, word:"astronaut", pos:"n.", chinese:"太空人；宇航员"}, {num:28, word:"at the moment", pos:"adv.", chinese:"现在；此刻"},
+            {num:29, word:"August", pos:"n.", chinese:"八月"}, {num:30, word:"autumn", pos:"n.", chinese:"秋天"},
+            {num:31, word:"away", pos:"adv.", chinese:"离开；走开"}, {num:32, word:"backpack", pos:"n.", chinese:"背包"},
+            {num:33, word:"bandage", pos:"n.", chinese:"绷带"}, {num:34, word:"bank", pos:"n.", chinese:"银行"},
+            {num:35, word:"beetle", pos:"n.", chinese:"甲虫"}, {num:36, word:"before", pos:"adv./conj.", chinese:"在……以前"},
+            {num:37, word:"begin", pos:"v.", chinese:"开始"}, {num:38, word:"believe", pos:"v.", chinese:"相信；信任"},
+            {num:39, word:"belt", pos:"n.", chinese:"皮带"}, {num:40, word:"Betty", pos:"n.", chinese:"贝蒂（人名）"},
+            {num:41, word:"bicycle", pos:"n.", chinese:"脚踏车；自行车"}, {num:42, word:"bin", pos:"n.", chinese:"垃圾箱；桶"},
+            {num:43, word:"biscuit", pos:"n.", chinese:"饼干"}, {num:44, word:"bit", pos:"n.", chinese:"一点；少量"},
+            {num:45, word:"bored", pos:"adj.", chinese:"厌烦的；无聊的"}, {num:46, word:"borrow", pos:"v.", chinese:"借入"},
+            {num:47, word:"bracelet", pos:"n.", chinese:"手镯"}, {num:48, word:"break", pos:"v.", chinese:"打破；弄坏；损坏"},
+            {num:49, word:"bridge", pos:"n.", chinese:"桥"}, {num:50, word:"broken", pos:"adj.", chinese:"损坏的；坏的"},
+            {num:51, word:"brush", pos:"n./v.", chinese:"刷子；刷；拂"}, {num:52, word:"burn", pos:"v.", chinese:"烧；烧伤；烫伤"},
+            {num:53, word:"business", pos:"n.", chinese:"生意；商业"}, {num:54, word:"businessman", pos:"n.", chinese:"商人；商人（女）"},
+            {num:55, word:"butter", pos:"n.", chinese:"奶油；黄油"}, {num:56, word:"butterfly", pos:"n.", chinese:"蝴蝶"},
+            {num:57, word:"by myself", pos:"adv.", chinese:"靠我自己；独自"}, {num:58, word:"by yourself", pos:"adv.", chinese:"靠你自己；独自"},
+            {num:59, word:"calendar", pos:"n.", chinese:"日历；挂历"}, {num:60, word:"camel", pos:"n.", chinese:"骆驼"},
+            {num:61, word:"camp", pos:"v.", chinese:"露营"}, {num:62, word:"card", pos:"n.", chinese:"纸牌；卡片；贺卡"},
+            {num:63, word:"cartoon", pos:"n.", chinese:"卡通；动画片"}, {num:64, word:"castle", pos:"n.", chinese:"城堡"},
+            {num:65, word:"cave", pos:"n.", chinese:"洞穴"}, {num:66, word:"century", pos:"n.", chinese:"世纪"},
+            {num:67, word:"cereal", pos:"n.", chinese:"麦片；谷类食品"}, {num:68, word:"channel", pos:"n.", chinese:"频道"},
+            {num:69, word:"chat", pos:"v.", chinese:"闲谈；聊天"}, {num:70, word:"cheap", pos:"adj.", chinese:"便宜的；廉价的"},
+            {num:71, word:"chemist", pos:"n.", chinese:"化学家；药剂师；药店"}, {num:72, word:"chess", pos:"n.", chinese:"西洋棋；国际象棋"},
+            {num:73, word:"chopsticks", pos:"n.", chinese:"筷子"}, {num:74, word:"club", pos:"n.", chinese:"俱乐部"},
+            {num:75, word:"collect", pos:"v.", chinese:"收集；搜集"}, {num:76, word:"colleague", pos:"n.", chinese:"同事"},
+            {num:77, word:"comb", pos:"n./v.", chinese:"梳子；用梳子梳（头发）"}, {num:78, word:"competition", pos:"n.", chinese:"比赛；竞赛"},
+            {num:79, word:"concert", pos:"n.", chinese:"音乐会；演奏会"}, {num:80, word:"conversation", pos:"n.", chinese:"会话；谈话"},
+            {num:81, word:"cooker", pos:"n.", chinese:"炊具；炉灶"}, {num:82, word:"cookie", pos:"n.", chinese:"饼干"},
+            {num:83, word:"corner", pos:"n.", chinese:"街角；角落"}, {num:84, word:"costume", pos:"n.", chinese:"服装；戏服"},
+            {num:85, word:"could", pos:"v.", chinese:"可能；可以（情态动词）"}, {num:86, word:"creature", pos:"n.", chinese:"生物；动物"},
+            {num:87, word:"crown", pos:"n.", chinese:"王冠"}, {num:88, word:"cushion", pos:"n.", chinese:"垫子；软垫"},
+            {num:89, word:"cut", pos:"v.", chinese:"切；割；剪"}, {num:90, word:"cycle", pos:"v.", chinese:"骑自行车；循环"},
+            {num:91, word:"dark", pos:"adj.", chinese:"黑暗的；暗的"}, {num:92, word:"date", pos:"n.", chinese:"日期"},
+            {num:93, word:"David", pos:"n.", chinese:"大卫（人名）"}, {num:94, word:"dear", pos:"adj.", chinese:"亲爱的（用于信件开头）"},
+            {num:95, word:"December", pos:"n.", chinese:"十二月"}, {num:96, word:"decide", pos:"v.", chinese:"决定"},
+            {num:97, word:"dentist", pos:"n.", chinese:"牙医"}, {num:98, word:"desert", pos:"n.", chinese:"沙漠"},
+            {num:99, word:"dictionary", pos:"n.", chinese:"字典"}, {num:100, word:"different", pos:"adj.", chinese:"不同的"},
+            {num:101, word:"difficult", pos:"adj.", chinese:"困难的"}, {num:102, word:"dinosaur", pos:"n.", chinese:"恐龙"},
+            {num:103, word:"dolphin", pos:"n.", chinese:"海豚"}, {num:104, word:"dragon", pos:"n.", chinese:"龙"},
+            {num:105, word:"draw", pos:"v.", chinese:"画；绘画"}, {num:106, word:"drop", pos:"v.", chinese:"掉下；落下"},
+            {num:107, word:"dry", pos:"adj.", chinese:"干的；干燥的"}, {num:108, word:"during", pos:"prep.", chinese:"在……期间"},
+            {num:109, word:"each", pos:"det.", chinese:"每个"}, {num:110, word:"early", pos:"adj./adv.", chinese:"早的；提早"},
+            {num:111, word:"earth", pos:"n.", chinese:"地球"}, {num:112, word:"east", pos:"n.", chinese:"东方"},
+            {num:113, word:"easy", pos:"adj.", chinese:"容易的"}, {num:114, word:"eat", pos:"v.", chinese:"吃"},
+            {num:115, word:"egg", pos:"n.", chinese:"蛋"}, {num:116, word:"email", pos:"n.", chinese:"电子邮件"},
+            {num:117, word:"Emma", pos:"n.", chinese:"艾玛（人名）"}, {num:118, word:"enough", pos:"adj./adv.", chinese:"足够的"},
+            {num:119, word:"exit", pos:"n.", chinese:"出口"}, {num:120, word:"expensive", pos:"adj.", chinese:"昂贵的"},
+            {num:121, word:"famous", pos:"adj.", chinese:"著名的"}, {num:122, word:"farm", pos:"n.", chinese:"农场"},
+            {num:123, word:"fat", pos:"adj.", chinese:"胖的"}, {num:124, word:"feed", pos:"v.", chinese:"喂养"},
+            {num:125, word:"feel", pos:"v.", chinese:"感觉"}, {num:126, word:"few", pos:"det.", chinese:"少数；几个"},
+            {num:127, word:"field", pos:"n.", chinese:"田野；场地"}, {num:128, word:"film", pos:"n.", chinese:"电影"},
+            {num:129, word:"find", pos:"v.", chinese:"找到；发现"}, {num:130, word:"fire", pos:"n.", chinese:"火"},
+            {num:131, word:"fire engine", pos:"n.", chinese:"消防车"}, {num:132, word:"first", pos:"adj./adv.", chinese:"第一"},
+            {num:133, word:"fly", pos:"v.", chinese:"飞"}, {num:134, word:"foggy", pos:"adj.", chinese:"有雾的"},
+            {num:135, word:"Frank", pos:"n.", chinese:"法兰克（人名）"}, {num:136, word:"fridge", pos:"n.", chinese:"冰箱"},
+            {num:137, word:"Friday", pos:"n.", chinese:"星期五"}, {num:138, word:"frog", pos:"n.", chinese:"青蛙"},
+            {num:139, word:"fruit", pos:"n.", chinese:"水果"}, {num:140, word:"future", pos:"n.", chinese:"未来"},
+            {num:141, word:"game", pos:"n.", chinese:"游戏；比赛"}, {num:142, word:"garden", pos:"n.", chinese:"花园"},
+            {num:143, word:"George", pos:"n.", chinese:"乔治（人名）"}, {num:144, word:"giraffe", pos:"n.", chinese:"长颈鹿"},
+            {num:145, word:"glass", pos:"n.", chinese:"玻璃杯"}, {num:146, word:"glove", pos:"n.", chinese:"手套"},
+            {num:147, word:"golf", pos:"n.", chinese:"高尔夫球"}, {num:148, word:"grass", pos:"n.", chinese:"草"},
+            {num:149, word:"great", pos:"adj.", chinese:"极好的；伟大的"}, {num:150, word:"green", pos:"adj.", chinese:"绿色的"},
+            {num:151, word:"ground", pos:"n.", chinese:"地面"}, {num:152, word:"group", pos:"n.", chinese:"群；组"},
+            {num:153, word:"grow", pos:"v.", chinese:"生长"}, {num:154, word:"guitar", pos:"n.", chinese:"吉他"},
+            {num:155, word:"hair", pos:"n.", chinese:"头发"}, {num:156, word:"hamburger", pos:"n.", chinese:"汉堡包"},
+            {num:157, word:"handbag", pos:"n.", chinese:"手提包"}, {num:158, word:"Harry", pos:"n.", chinese:"哈利（人名）"},
+            {num:159, word:"hat", pos:"n.", chinese:"帽子"}, {num:160, word:"have to", pos:"v.", chinese:"必须；不得不"},
+            {num:161, word:"headache", pos:"n.", chinese:"头痛"}, {num:162, word:"health", pos:"n.", chinese:"健康"},
+            {num:163, word:"hear", pos:"v.", chinese:"听见"}, {num:164, word:"heavier", pos:"adj.", chinese:"更重的"},
+            {num:165, word:"helmet", pos:"n.", chinese:"头盔"}, {num:166, word:"help", pos:"v.", chinese:"帮助"},
+            {num:167, word:"Helen", pos:"n.", chinese:"海伦（人名）"}, {num:168, word:"high", pos:"adj.", chinese:"高的"},
+            {num:169, word:"hike", pos:"v.", chinese:"远足"}, {num:170, word:"history", pos:"n.", chinese:"历史"},
+            {num:171, word:"Holly", pos:"n.", chinese:"荷莉（人名）"}, {num:172, word:"hockey", pos:"n.", chinese:"曲棍球"},
+            {num:173, word:"hold", pos:"v.", chinese:"握住；拿住"}, {num:174, word:"hole", pos:"n.", chinese:"洞"},
+            {num:175, word:"holiday", pos:"n.", chinese:"假日；假期"}, {num:176, word:"home", pos:"n.", chinese:"家"},
+            {num:177, word:"homework", pos:"n.", chinese:"家庭作业"}, {num:178, word:"hop", pos:"v.", chinese:"单脚跳"},
+            {num:179, word:"hopscotch", pos:"n.", chinese:"跳房子游戏"}, {num:180, word:"hospital", pos:"n.", chinese:"医院"},
+            {num:181, word:"hotel", pos:"n.", chinese:"旅馆"}, {num:182, word:"hour", pos:"n.", chinese:"小时"},
+            {num:183, word:"house", pos:"n.", chinese:"房子"}, {num:184, word:"how long", pos:"adv.", chinese:"有多久"},
+            {num:185, word:"hurry", pos:"v.", chinese:"使起紧"}, {num:186, word:"husband", pos:"n.", chinese:"丈夫"},
+            {num:187, word:"if", pos:"conj.", chinese:"如果，假如"}, {num:188, word:"improve", pos:"v.", chinese:"改进，改善"},
+            {num:189, word:"in a minute", pos:"excl.", chinese:"马上，立刻"}, {num:190, word:"information", pos:"n.", chinese:"资讯"},
+            {num:191, word:"insect", pos:"n.", chinese:"昆虫"}, {num:192, word:"inside", pos:"prep.", chinese:"在……里面"},
+            {num:193, word:"island", pos:"n.", chinese:"岛"}, {num:194, word:"job", pos:"n.", chinese:"工作"},
+            {num:195, word:"jog", pos:"v.", chinese:"慢跑"}, {num:196, word:"journalist", pos:"n.", chinese:"记者"},
+            {num:197, word:"journey", pos:"n.", chinese:"旅行"}, {num:198, word:"jump", pos:"v.", chinese:"跳"},
+            {num:199, word:"jungle", pos:"n.", chinese:"丛林"}, {num:200, word:"keep", pos:"v.", chinese:"保有"},
+            {num:201, word:"key", pos:"n.", chinese:"钥匙；（解决问题的）线索"}, {num:202, word:"kilometre", pos:"n.", chinese:"公里"},
+            {num:203, word:"kind", pos:"adj.", chinese:"亲切的"}, {num:204, word:"king", pos:"n.", chinese:"国王"},
+            {num:205, word:"knee", pos:"n.", chinese:"膝盖"}, {num:206, word:"knife", pos:"n.", chinese:"刀"},
+            {num:207, word:"land", pos:"v.", chinese:"使一整陆；使一降落"}, {num:208, word:"language", pos:"n.", chinese:"语言"},
+            {num:209, word:"large", pos:"adj.", chinese:"大的"}, {num:210, word:"last", pos:"adj.", chinese:"最后的"},
+            {num:211, word:"late", pos:"adj.", chinese:"迟的"}, {num:212, word:"laugh", pos:"v.", chinese:"笑"},
+            {num:213, word:"leaf", pos:"n.", chinese:"叶子"}, {num:214, word:"learn", pos:"v.", chinese:"学习"},
+            {num:215, word:"leave", pos:"v.", chinese:"离开"}, {num:216, word:"left", pos:"adj.", chinese:"左边的"},
+            {num:217, word:"lemon", pos:"n.", chinese:"柠檬"}, {num:218, word:"lemonade", pos:"n.", chinese:"柠檬汁"},
+            {num:219, word:"lesson", pos:"n.", chinese:"课"}, {num:220, word:"letter", pos:"n.", chinese:"信；字母"},
+            {num:221, word:"lift", pos:"v.", chinese:"举起"}, {num:222, word:"light", pos:"n.", chinese:"光；灯"},
+            {num:223, word:"lightning", pos:"n.", chinese:"闪电"}, {num:224, word:"literature", pos:"n.", chinese:"文学"},
+            {num:225, word:"litter", pos:"n.", chinese:"垃圾"}, {num:226, word:"lizard", pos:"n.", chinese:"蜥蜴"},
+            {num:227, word:"log", pos:"n.", chinese:"木头"}, {num:228, word:"London", pos:"n.", chinese:"伦敦"},
+            {num:229, word:"long", pos:"adj.", chinese:"长的"}, {num:230, word:"look after", pos:"v.", chinese:"照顾"},
+            {num:231, word:"look for", pos:"v.", chinese:"寻找"}, {num:232, word:"loud", pos:"adj.", chinese:"大声的"},
+            {num:233, word:"love", pos:"v.", chinese:"爱；喜爱"}, {num:234, word:"low", pos:"adj.", chinese:"低的，矮的，浅的"},
+            {num:235, word:"lucky", pos:"adj.", chinese:"幸运的"}, {num:236, word:"magazine", pos:"n.", chinese:"杂志"},
+            {num:237, word:"make sure", pos:"v.", chinese:"确定"}, {num:238, word:"manager", pos:"n.", chinese:"经理"},
+            {num:239, word:"March", pos:"n.", chinese:"三月"}, {num:240, word:"married", pos:"adj.", chinese:"已婚的"},
+            {num:241, word:"match", pos:"n.", chinese:"比赛，对手"}, {num:242, word:"maths", pos:"n.", chinese:"数学"},
+            {num:243, word:"May", pos:"n.", chinese:"五月"}, {num:244, word:"maybe", pos:"adv.", chinese:"可能；也许"},
+            {num:245, word:"meat", pos:"n.", chinese:"肉"}, {num:246, word:"mechanic", pos:"n.", chinese:"技工"},
+            {num:247, word:"medicine", pos:"n.", chinese:"药"}, {num:248, word:"meet", pos:"v.", chinese:"见面"},
+            {num:249, word:"message", pos:"n.", chinese:"消息"}, {num:250, word:"metal", pos:"n.", chinese:"金属"},
+            {num:251, word:"Michael", pos:"n.", chinese:"迈克尔（人名）"}, {num:252, word:"might", pos:"v.", chinese:"可能"},
+            {num:253, word:"milk", pos:"n.", chinese:"牛奶"}, {num:254, word:"minute", pos:"n.", chinese:"分钟"},
+            {num:255, word:"mirror", pos:"n.", chinese:"镜子"}, {num:256, word:"mobile phone", pos:"n.", chinese:"手机"},
+            {num:257, word:"monday", pos:"n.", chinese:"星期一"}, {num:258, word:"money", pos:"n.", chinese:"钱"},
+            {num:259, word:"monkey", pos:"n.", chinese:"猴子"}, {num:260, word:"month", pos:"n.", chinese:"月"},
+            {num:261, word:"moon", pos:"n.", chinese:"月亮"}, {num:262, word:"more", pos:"adj.", chinese:"更多的"},
+            {num:263, word:"morning", pos:"n.", chinese:"早上"}, {num:264, word:"mountain", pos:"n.", chinese:"山"},
+            {num:265, word:"mouse", pos:"n.", chinese:"老鼠"}, {num:266, word:"moustache", pos:"n.", chinese:"胡子"},
+            {num:267, word:"mouth", pos:"n.", chinese:"嘴"}, {num:268, word:"move", pos:"v.", chinese:"移动"},
+            {num:269, word:"much", pos:"adj.", chinese:"很多"}, {num:270, word:"museum", pos:"n.", chinese:"博物馆"},
+            {num:271, word:"music", pos:"n.", chinese:"音乐"}, {num:272, word:"must", pos:"v.", chinese:"必须"},
+            {num:273, word:"name", pos:"n.", chinese:"名字"}, {num:274, word:"narrow", pos:"adj.", chinese:"窄的"},
+            {num:275, word:"nature", pos:"n.", chinese:"自然"}, {num:276, word:"near", pos:"prep.", chinese:"靠近"},
+            {num:277, word:"nearly", pos:"adv.", chinese:"几乎"}, {num:278, word:"neck", pos:"n.", chinese:"脖子"},
+            {num:279, word:"need", pos:"v.", chinese:"需要"}, {num:280, word:"never", pos:"adv.", chinese:"从不"},
+            {num:281, word:"new", pos:"adj.", chinese:"新的"}, {num:282, word:"news", pos:"n.", chinese:"新闻"},
+            {num:283, word:"newspaper", pos:"n.", chinese:"报纸"}, {num:284, word:"next", pos:"adj.", chinese:"下一个"},
+            {num:285, word:"nice", pos:"adj.", chinese:"好的；友好的"}, {num:286, word:"night", pos:"n.", chinese:"晚上"},
+            {num:287, word:"north", pos:"n.", chinese:"北方"}, {num:288, word:"nose", pos:"n.", chinese:"鼻子"},
+            {num:289, word:"notebook", pos:"n.", chinese:"笔记本"}, {num:290, word:"nothing", pos:"pron.", chinese:"没有东西"},
+            {num:291, word:"November", pos:"n.", chinese:"十一月"}, {num:292, word:"now", pos:"adv.", chinese:"现在"},
+            {num:293, word:"number", pos:"n.", chinese:"数字；号码"}, {num:294, word:"nurse", pos:"n.", chinese:"护士"},
+            {num:295, word:"ocean", pos:"n.", chinese:"海洋"}, {num:296, word:"October", pos:"n.", chinese:"十月"},
+            {num:297, word:"offer", pos:"v.", chinese:"提供"}, {num:298, word:"office", pos:"n.", chinese:"办公室"},
+            {num:299, word:"often", pos:"adv.", chinese:"经常"}, {num:300, word:"Oliver", pos:"n.", chinese:"奥利弗（人名）"},
+            {num:301, word:"once", pos:"adv.", chinese:"一次"}, {num:302, word:"only", pos:"adj.", chinese:"唯一的"},
+            {num:303, word:"open", pos:"v.", chinese:"打开"}, {num:304, word:"opposite", pos:"prep.", chinese:"在……对面"},
+            {num:305, word:"or", pos:"conj.", chinese:"或者"}, {num:306, word:"orange", pos:"n.", chinese:"橙子"},
+            {num:307, word:"other", pos:"adj.", chinese:"其他的"}, {num:308, word:"out", pos:"adv.", chinese:"外面"},
+            {num:309, word:"outside", pos:"prep.", chinese:"在……外面"}, {num:310, word:"oven", pos:"n.", chinese:"烤箱"},
+            {num:311, word:"over", pos:"prep.", chinese:"在……上方"}, {num:312, word:"page", pos:"n.", chinese:"页"},
+            {num:313, word:"paint", pos:"v.", chinese:"绘画"}, {num:314, word:"pair", pos:"n.", chinese:"一双"},
+            {num:315, word:"palace", pos:"n.", chinese:"宫殿"}, {num:316, word:"panda", pos:"n.", chinese:"熊猫"},
+            {num:317, word:"paper", pos:"n.", chinese:"纸"}, {num:318, word:"paragraph", pos:"n.", chinese:"段落"},
+            {num:319, word:"parrot", pos:"n.", chinese:"鹦鹉"}, {num:320, word:"part", pos:"n.", chinese:"部分"},
+            {num:321, word:"partner", pos:"n.", chinese:"伙伴"}, {num:322, word:"party", pos:"n.", chinese:"派对"},
+            {num:323, word:"pass", pos:"v.", chinese:"传递"}, {num:324, word:"passage", pos:"n.", chinese:"通道；文章"},
+            {num:325, word:"passport", pos:"n.", chinese:"护照"}, {num:326, word:"past", pos:"prep.", chinese:"经过"},
+            {num:327, word:"pea", pos:"n.", chinese:"豌豆"}, {num:328, word:"pear", pos:"n.", chinese:"梨"},
+            {num:329, word:"pen", pos:"n.", chinese:"钢笔"}, {num:330, word:"pencil", pos:"n.", chinese:"铅笔"},
+            {num:331, word:"people", pos:"n.", chinese:"人"}, {num:332, word:"pepper", pos:"n.", chinese:"胡椒"},
+            {num:333, word:"pet", pos:"n.", chinese:"宠物"}, {num:334, word:"photo", pos:"n.", chinese:"照片"},
+            {num:335, word:"photograph", pos:"n.", chinese:"照片"}, {num:336, word:"piano", pos:"n.", chinese:"钢琴"},
+            {num:337, word:"pick", pos:"v.", chinese:"挑选"}, {num:338, word:"picnic", pos:"n.", chinese:"野餐"},
+            {num:339, word:"picture", pos:"n.", chinese:"图片"}, {num:340, word:"piece", pos:"n.", chinese:"片；块"},
+            {num:341, word:"pineapple", pos:"n.", chinese:"菠萝"}, {num:342, word:"pirate", pos:"n.", chinese:"海盗"},
+            {num:343, word:"pizza", pos:"n.", chinese:"披萨"}, {num:344, word:"place", pos:"n.", chinese:"地方"},
+            {num:345, word:"planet", pos:"n.", chinese:"行星"}, {num:346, word:"plant", pos:"n.", chinese:"植物"},
+            {num:347, word:"plastic", pos:"n.", chinese:"塑料"}, {num:348, word:"plate", pos:"n.", chinese:"盘子"},
+            {num:349, word:"play", pos:"v.", chinese:"玩"}, {num:350, word:"player", pos:"n.", chinese:"选手"},
+            {num:351, word:"playground", pos:"n.", chinese:"操场"}, {num:352, word:"pleasant", pos:"adj.", chinese:"令人愉快的"},
+            {num:353, word:"pleased", pos:"adj.", chinese:"高兴的"}, {num:354, word:"pocket", pos:"n.", chinese:"口袋"},
+            {num:355, word:"poem", pos:"n.", chinese:"诗"}, {num:356, word:"point", pos:"n.", chinese:"点；分数"},
+            {num:357, word:"police", pos:"n.", chinese:"警察"}, {num:358, word:"poor", pos:"adj.", chinese:"穷的"},
+            {num:359, word:"pop", pos:"adj.", chinese:"流行的"}, {num:360, word:"postcard", pos:"n.", chinese:"明信片"},
+            {num:361, word:"potato", pos:"n.", chinese:"土豆"}, {num:362, word:"potion", pos:"n.", chinese:"药水"},
+            {num:363, word:"pour", pos:"v.", chinese:"倒"}, {num:364, word:"present", pos:"n.", chinese:"礼物"},
+            {num:365, word:"problem", pos:"n.", chinese:"问题"}, {num:366, word:"programme", pos:"n.", chinese:"节目"},
+            {num:367, word:"project", pos:"n.", chinese:"项目"}, {num:368, word:"protect", pos:"v.", chinese:"保护"},
+            {num:369, word:"puppet", pos:"n.", chinese:"木偶"}, {num:370, word:"puzzle", pos:"n.", chinese:"拼图；谜题"},
+            {num:371, word:"question", pos:"n.", chinese:"问题"}, {num:372, word:"quick", pos:"adj.", chinese:"快的"},
+            {num:373, word:"quiet", pos:"adj.", chinese:"安静的"}, {num:374, word:"quiz", pos:"n.", chinese:"测验"},
+            {num:375, word:"rabbit", pos:"n.", chinese:"兔子"}, {num:376, word:"radio", pos:"n.", chinese:"收音机"},
+            {num:377, word:"rainbow", pos:"n.", chinese:"彩虹"}, {num:378, word:"raincoat", pos:"n.", chinese:"雨衣"},
+            {num:379, word:"rainy", pos:"adj.", chinese:"下雨的"}, {num:380, word:"rat", pos:"n.", chinese:"老鼠"},
+            {num:381, word:"rather", pos:"adv.", chinese:"相当"}, {num:382, word:"reach", pos:"v.", chinese:"到达"},
+            {num:383, word:"read", pos:"v.", chinese:"阅读"}, {num:384, word:"ready", pos:"adj.", chinese:"准备好的"},
+            {num:385, word:"really", pos:"adv.", chinese:"真正地"}, {num:386, word:"recipe", pos:"n.", chinese:"食谱"},
+            {num:387, word:"remember", pos:"v.", chinese:"记得"}, {num:388, word:"repair", pos:"v.", chinese:"修理"},
+            {num:389, word:"repeat", pos:"v.", chinese:"重复"}, {num:390, word:"restaurant", pos:"n.", chinese:"餐馆"},
+            {num:391, word:"Richard", pos:"n.", chinese:"理查德（人名）"}, {num:392, word:"right", pos:"adj.", chinese:"正确的；右边的"},
+            {num:393, word:"ring", pos:"n.", chinese:"戒指"}, {num:394, word:"Robert", pos:"n.", chinese:"罗伯特（人名）"},
+            {num:395, word:"rock", pos:"n.", chinese:"岩石"}, {num:396, word:"rocket", pos:"n.", chinese:"火箭"},
+            {num:397, word:"rucksack", pos:"n.", chinese:"背包"}, {num:398, word:"sad", pos:"adj.", chinese:"悲伤的"},
+            {num:399, word:"safe", pos:"adj.", chinese:"安全的"}, {num:400, word:"same", pos:"adj.", chinese:"相同的"},
+            {num:401, word:"sandcastle", pos:"n.", chinese:"沙堡"}, {num:402, word:"Sarah", pos:"n.", chinese:"莎拉（人名）"},
+            {num:403, word:"Saturday", pos:"n.", chinese:"星期六"}, {num:404, word:"save", pos:"v.", chinese:"挽救，储存"},
+            {num:405, word:"say", pos:"v.", chinese:"说"}, {num:406, word:"science", pos:"n.", chinese:"科学"},
+            {num:407, word:"scissors", pos:"n.", chinese:"剪刀"}, {num:408, word:"score", pos:"n.", chinese:"得分"},
+            {num:409, word:"screen", pos:"n.", chinese:"屏幕"}, {num:410, word:"search", pos:"v.", chinese:"搜查"},
+            {num:411, word:"secret", pos:"n.", chinese:"秘密"}, {num:412, word:"sell", pos:"v.", chinese:"卖"},
+            {num:413, word:"September", pos:"n.", chinese:"九月"}, {num:414, word:"several", pos:"adj.", chinese:"各自的，分别的"},
+            {num:415, word:"shake", pos:"v.", chinese:"摇动"}, {num:416, word:"shall", pos:"v.", chinese:"将要"},
+            {num:417, word:"shampoo", pos:"n.", chinese:"洗发精"}, {num:418, word:"shelf", pos:"n.", chinese:"架子"},
+            {num:419, word:"should", pos:"v.", chinese:"应该"}, {num:420, word:"show", pos:"v.", chinese:"展示"},
+            {num:421, word:"sick", pos:"adj.", chinese:"生病的"}, {num:422, word:"silver", pos:"adj.", chinese:"银色的"},
+            {num:423, word:"similar", pos:"adj.", chinese:"相似的"}, {num:424, word:"simple", pos:"adj.", chinese:"简单的"},
+            {num:425, word:"since", pos:"prep.", chinese:"自从……；从……以来"}, {num:426, word:"singer", pos:"n.", chinese:"歌手"},
+            {num:427, word:"skate", pos:"v.", chinese:"滑冰"}, {num:428, word:"skyscraper", pos:"n.", chinese:"摩天大楼"},
+            {num:429, word:"sledge", pos:"n.", chinese:"雪橇"}, {num:430, word:"sleep", pos:"v.", chinese:"睡觉"},
+            {num:431, word:"slow", pos:"adj.", chinese:"慢的"}, {num:432, word:"small", pos:"adj.", chinese:"小的"},
+            {num:433, word:"smell", pos:"n./v.", chinese:"气味 / 闻到"}, {num:434, word:"smile", pos:"v.", chinese:"微笑"},
+            {num:435, word:"snack", pos:"n.", chinese:"点心"}, {num:436, word:"snow", pos:"n.", chinese:"雪"},
+            {num:437, word:"snowball", pos:"n.", chinese:"雪球"}, {num:438, word:"snowboard", pos:"n.", chinese:"滑雪板"},
+            {num:439, word:"snowboarding", pos:"n.", chinese:"单板滑雪（运动）"}, {num:440, word:"snowman", pos:"n.", chinese:"雪人"},
+            {num:441, word:"so", pos:"adv.", chinese:"很，非常"}, {num:442, word:"soap", pos:"n.", chinese:"肥皂"},
+            {num:443, word:"soft", pos:"adj.", chinese:"柔软的"}, {num:444, word:"somewhere", pos:"adv.", chinese:"在某处"},
+            {num:445, word:"soon", pos:"adv.", chinese:"不久，很快"}, {num:446, word:"Sophia", pos:"n.", chinese:"索菲亚（人名）"},
+            {num:447, word:"sore", pos:"adj.", chinese:"疼痛的"}, {num:448, word:"sound", pos:"n.", chinese:"声音"},
+            {num:449, word:"south", pos:"n.", chinese:"南方"}, {num:450, word:"space", pos:"n.", chinese:"空间"},
+            {num:451, word:"spaceship", pos:"n.", chinese:"太空船"}, {num:452, word:"speak", pos:"v.", chinese:"说"},
+            {num:453, word:"special", pos:"adj.", chinese:"特别的"}, {num:454, word:"spend", pos:"v.", chinese:"费；用；花（钱）"},
+            {num:455, word:"spoon", pos:"n.", chinese:"汤匙"}, {num:456, word:"sport", pos:"n.", chinese:"运动"},
+            {num:457, word:"spot", pos:"n.", chinese:"点；斑点；圆点"}, {num:458, word:"spotted", pos:"adj.", chinese:"有斑点的"},
+            {num:459, word:"spring", pos:"n.", chinese:"春天"}, {num:460, word:"stadium", pos:"n.", chinese:"体育场"},
+            {num:461, word:"stage", pos:"n.", chinese:"阶段"}, {num:462, word:"stamp", pos:"n.", chinese:"邮票"},
+            {num:463, word:"stay", pos:"v.", chinese:"留下；停留"}, {num:464, word:"step", pos:"n.", chinese:"步；台阶；脚步"},
+            {num:465, word:"still", pos:"adv.", chinese:"仍然"}, {num:466, word:"stone", pos:"n.", chinese:"石头"},
+            {num:467, word:"storm", pos:"n.", chinese:"暴风雨"}, {num:468, word:"straight on", pos:"adv.", chinese:"直接"},
+            {num:469, word:"strange", pos:"adj.", chinese:"奇怪的"}, {num:470, word:"strawberry", pos:"n.", chinese:"草莓"},
+            {num:471, word:"stream", pos:"n.", chinese:"小河，溪流"}, {num:472, word:"street", pos:"n.", chinese:"街道"},
+            {num:473, word:"stripe", pos:"n.", chinese:"条纹"}, {num:474, word:"striped", pos:"adj.", chinese:"有条纹的"},
+            {num:475, word:"student", pos:"n.", chinese:"学生"}, {num:476, word:"study", pos:"v.", chinese:"学习"},
+            {num:477, word:"subject", pos:"n.", chinese:"主题，学科"}, {num:478, word:"such", pos:"det.", chinese:"如此，这么"},
+            {num:479, word:"suddenly", pos:"adv.", chinese:"突然"}, {num:480, word:"sugar", pos:"n.", chinese:"糖"},
+            {num:481, word:"suitcase", pos:"n.", chinese:"小型旅行箱"}, {num:482, word:"summer", pos:"n.", chinese:"夏天"},
+            {num:483, word:"sun", pos:"n.", chinese:"太阳"}, {num:484, word:"sunglasses", pos:"n.", chinese:"太阳眼镜"},
+            {num:485, word:"sunny", pos:"adj.", chinese:"晴朗的"}, {num:486, word:"sunrise", pos:"n.", chinese:"日出"},
+            {num:487, word:"sunset", pos:"n.", chinese:"日落"}, {num:488, word:"supermarket", pos:"n.", chinese:"超市"},
+            {num:489, word:"sure", pos:"adj.", chinese:"确定的"}, {num:490, word:"surname", pos:"n.", chinese:"姓"},
+            {num:491, word:"surprise", pos:"n.", chinese:"惊讶"}, {num:492, word:"swan", pos:"n.", chinese:"天鹅"},
+            {num:493, word:"sweater", pos:"n.", chinese:"毛衣"}, {num:494, word:"swing", pos:"n.", chinese:"秋千"},
+            {num:495, word:"table", pos:"n.", chinese:"桌子"}, {num:496, word:"take", pos:"v.", chinese:"花费（时间）"},
+            {num:497, word:"taste", pos:"n.", chinese:"味道"}, {num:498, word:"taxi", pos:"n.", chinese:"计程车"},
+            {num:499, word:"team", pos:"n.", chinese:"队，组，班"}, {num:500, word:"telephone", pos:"n.", chinese:"电话"},
+            {num:501, word:"television", pos:"n.", chinese:"电视"}, {num:502, word:"tell", pos:"v.", chinese:"告诉"},
+            {num:503, word:"tent", pos:"n.", chinese:"帐篷"}, {num:504, word:"text", pos:"n.", chinese:"文本"},
+            {num:505, word:"thank", pos:"v.", chinese:"感谢"}, {num:506, word:"theatre", pos:"n.", chinese:"剧院"},
+            {num:507, word:"thick", pos:"adj.", chinese:"厚的"}, {num:508, word:"thin", pos:"adj.", chinese:"薄的"},
+            {num:509, word:"thing", pos:"n.", chinese:"东西"}, {num:510, word:"think", pos:"v.", chinese:"想"},
+            {num:511, word:"thirsty", pos:"adj.", chinese:"渴的"}, {num:512, word:"thirteen", pos:"num.", chinese:"十三"},
+            {num:513, word:"thirty", pos:"num.", chinese:"三十"}, {num:514, word:"this", pos:"det.", chinese:"这个"},
+            {num:515, word:"thousand", pos:"n.", chinese:"千"}, {num:516, word:"through", pos:"prep.", chinese:"通过；穿越"},
+            {num:517, word:"throw", pos:"v.", chinese:"扔"}, {num:518, word:"Thursday", pos:"n.", chinese:"星期四"},
+            {num:519, word:"tidy", pos:"adj.", chinese:"整齐的"}, {num:520, word:"tie", pos:"n.", chinese:"领带"},
+            {num:521, word:"tiger", pos:"n.", chinese:"老虎"}, {num:522, word:"time", pos:"n.", chinese:"时间"},
+            {num:523, word:"timetable", pos:"n.", chinese:"时间表"}, {num:524, word:"tired", pos:"adj.", chinese:"累的"},
+            {num:525, word:"to", pos:"prep.", chinese:"到；向"}, {num:526, word:"today", pos:"adv.", chinese:"今天"},
+            {num:527, word:"toe", pos:"n.", chinese:"脚趾"}, {num:528, word:"together", pos:"adv.", chinese:"一起"},
+            {num:529, word:"tomorrow", pos:"adv.", chinese:"明天"}, {num:530, word:"tonight", pos:"adv.", chinese:"今晚"},
+            {num:531, word:"torch", pos:"n.", chinese:"手电筒"}, {num:532, word:"tortoise", pos:"n.", chinese:"陆龟"},
+            {num:533, word:"touch", pos:"v.", chinese:"触摸"}, {num:534, word:"tour", pos:"v.", chinese:"参观"},
+            {num:535, word:"towel", pos:"n.", chinese:"毛巾"}, {num:536, word:"tower", pos:"n.", chinese:"塔"},
+            {num:537, word:"town", pos:"n.", chinese:"城镇"}, {num:538, word:"toy", pos:"n.", chinese:"玩具"},
+            {num:539, word:"traffic", pos:"n.", chinese:"交通流量"}, {num:540, word:"trainers", pos:"n.", chinese:"教练"}
+        ];
+
+        let currentIndex = 0;
+        let shuffledVocab = [...vocabulary];
+        let selectedLetters = [];
+        let quizQuestions = [];
+        let currentQuestion = 0;
+        let score = 0;
+        let learnedWords = new Set();
+        let hintUsed = false;
+
+        // Text-to-Speech
+        function speak(text, lang = 'en') {
+            if ('speechSynthesis' in window) {
+                speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = lang;
+                utterance.rate = 0.85;
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        function speakCurrent() {
+            const word = shuffledVocab[currentIndex].word;
+            speak(word, 'en');
+        }
+
+        function speakCurrentEn() {
+            const word = shuffledVocab[currentIndex].word;
+            speak(word, 'en');
+        }
+
+        function speakCurrentZh() {
+            const chinese = shuffledVocab[currentIndex].chinese;
+            speak(chinese, 'zh-TW');
+        }
+
+        // 圖片快取
+        const imageCache = {};
+
+        // 獲取單字圖片
+        async function getWordImage(word) {
+            // 如果已經快取過，直接返回
+            if (imageCache[word]) {
+                return imageCache[word];
+            }
+            
+            // 使用 Wikimedia Commons API 搜尋圖片
+            const searchTerms = [
+                word.toLowerCase(),
+                word.toLowerCase().replace(/[^a-z]/g, ''),
+                word.toLowerCase().split(' ')[0]
+            ];
+            
+            for (const term of searchTerms) {
+                try {
+                    const url = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(term)}&srnamespace=6&srlimit=3&format=json&origin=*`;
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    
+                    if (data.query && data.query.search && data.query.search.length > 0) {
+                        for (const result of data.query.search) {
+                            const title = result.title;
+                            // 獲取圖片 URL
+                            const imageInfoUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=imageinfo&iiprop=url&format=json&origin=*`;
+                            const imageInfoResponse = await fetch(imageInfoUrl);
+                            const imageInfoData = await imageInfoResponse.json();
+                            
+                            const pages = imageInfoData.query.pages;
+                            for (const pageId in pages) {
+                                if (pages[pageId].imageinfo && pages[pageId].imageinfo[0]) {
+                                    const imageUrl = pages[pageId].imageinfo[0].url;
+                                    // 檢查是否是圖片格式
+                                    if (imageUrl.match(/\.(jpg|jpeg|png|gif|svg|webp)$/i)) {
+                                        imageCache[word] = imageUrl;
+                                        return imageUrl;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.log('Image fetch error:', error);
+                }
+            }
+            
+            // 如果找不到，返回 null
+            imageCache[word] = null;
+            return null;
+        }
+
+        // 載入圖片到卡片
+        async function loadCardImage(word) {
+            const containerFront = document.getElementById('card-image-container');
+            const containerBack = document.getElementById('card-image-container-back');
+            
+            // 顯示載入中
+            containerFront.className = 'image-loading';
+            containerFront.innerHTML = '🔄 載入圖片中...';
+            containerBack.className = 'image-loading';
+            containerBack.innerHTML = '🔄 載入圖片中...';
+            
+            try {
+                const imageUrl = await getWordImage(word);
+                
+                if (imageUrl) {
+                    containerFront.className = '';
+                    containerFront.innerHTML = `<img src="${imageUrl}" alt="${word}" class="flashcard-image" onerror="this.style.display='none';this.parentElement.innerHTML='⚠️ 圖片載入失敗'" onload="this.style.opacity='1'" style="opacity:0;transition:opacity 0.3s;">`;
+                    
+                    containerBack.className = '';
+                    containerBack.innerHTML = `<img src="${imageUrl}" alt="${word}" class="flashcard-image" style="background:rgba(255,255,255,0.9);">`;
+                } else {
+                    containerFront.className = 'image-error';
+                    containerFront.innerHTML = '📷 暫無圖片';
+                    containerBack.className = 'image-error';
+                    containerBack.innerHTML = '📷 暫無圖片';
+                }
+            } catch (error) {
+                containerFront.className = 'image-error';
+                containerFront.innerHTML = '📷 暫無圖片';
+                containerBack.className = 'image-error';
+                containerBack.innerHTML = '📷 暫無圖片';
+            }
+        }
+
+        // Flashcard Functions
+        function flipCard() {
+            document.getElementById('flashcard').classList.toggle('flipped');
+        }
+
+        function updateCard() {
+            const card = shuffledVocab[currentIndex];
+            document.getElementById('card-word').textContent = card.word;
+            document.getElementById('card-word-back').textContent = card.word;
+            document.getElementById('card-pos').textContent = card.pos;
+            document.getElementById('card-pos-back').textContent = card.pos;
+            document.getElementById('card-chinese').textContent = card.chinese;
+            document.getElementById('flashcard').classList.remove('flipped');
+            
+            // 載入圖片
+            loadCardImage(card.word);
+            
+            const progress = ((currentIndex + 1) / shuffledVocab.length) * 100;
+            document.getElementById('flashcard-progress').style.width = progress + '%';
+            document.getElementById('flashcard-progress-text').textContent = `${currentIndex + 1} / ${shuffledVocab.length}`;
+            
+            learnedWords.add(card.num);
+            document.getElementById('learned-count').textContent = learnedWords.size;
+        }
+
+        function nextCard() {
+            currentIndex = (currentIndex + 1) % shuffledVocab.length;
+            updateCard();
+        }
+
+        function prevCard() {
+            currentIndex = (currentIndex - 1 + shuffledVocab.length) % shuffledVocab.length;
+            updateCard();
+        }
+
+        function shuffleCards() {
+            shuffledVocab = [...vocabulary].sort(() => Math.random() - 0.5);
+            currentIndex = 0;
+            updateCard();
+        }
+
+        function resetCards() {
+            shuffledVocab = [...vocabulary];
+            currentIndex = 0;
+            learnedWords.clear();
+            document.getElementById('learned-count').textContent = 0;
+            updateCard();
+        }
+
+        // Mode Switching
+        function switchMode(mode) {
+            document.querySelectorAll('.mode-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(mode + '-section').classList.add('active');
+            
+            if (mode === 'quiz') {
+                initLetterGrid();
+            } else if (mode === 'list') {
+                showWordList();
+            }
+        }
+
+        // Quiz Letter Selection
+        function initLetterGrid() {
+            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+            const grid = document.getElementById('letter-grid');
+            
+            grid.innerHTML = letters.map(letter => {
+                const count = vocabulary.filter(w => w.word.charAt(0).toUpperCase() === letter).length;
+                return `<button class="letter-btn" data-letter="${letter}" onclick="toggleLetter('${letter}')">
+                    ${letter}
+                    ${count > 0 ? `<span class="letter-count">(${count})</span>` : ''}
+                </button>`;
+            }).join('');
+            
+            updateFilterInfo();
+        }
+
+        function toggleLetter(letter) {
+            const btn = document.querySelector(`[data-letter="${letter}"]`);
+            if (selectedLetters.includes(letter)) {
+                selectedLetters = selectedLetters.filter(l => l !== letter);
+                btn.classList.remove('selected');
+            } else {
+                selectedLetters.push(letter);
+                btn.classList.add('selected');
+            }
+            updateFilterInfo();
+        }
+
+        function updateFilterInfo() {
+            const info = document.getElementById('filter-info');
+            if (selectedLetters.length === 0) {
+                info.innerHTML = '請選擇字母後點擊「開始測驗」';
+                info.innerHTML += '<br><button class="control-btn primary" style="margin-top:15px" onclick="startQuiz()">🎯 開始測驗</button>';
+            } else {
+                let total = 0;
+                selectedLetters.forEach(l => {
+                    total += vocabulary.filter(w => w.word.charAt(0).toUpperCase() === l).length;
+                });
+                info.innerHTML = `已選擇 ${selectedLetters.length} 個字母，共 ${total} 個單字`;
+                info.innerHTML += '<br><button class="control-btn primary" style="margin-top:15px" onclick="startQuiz()">🎯 開始測驗</button>';
+            }
+        }
+
+        // Quiz Functions
+        function startQuiz() {
+            if (selectedLetters.length === 0) {
+                alert('請先選擇要測驗的字母！');
+                return;
+            }
+            
+            const filtered = vocabulary.filter(w => 
+                selectedLetters.includes(w.word.charAt(0).toUpperCase())
+            );
+            
+            quizQuestions = [...filtered].sort(() => Math.random() - 0.5).slice(0, Math.min(10, filtered.length));
+            currentQuestion = 0;
+            score = 0;
+            hintUsed = false;
+            
+            document.getElementById('current-score').textContent = 0;
+            document.getElementById('total-questions').textContent = quizQuestions.length;
+            document.getElementById('quiz-container').style.display = 'block';
+            
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = quizQuestions[currentQuestion];
+            const content = document.getElementById('quiz-content');
+            const word = q.word.toLowerCase();
+            
+            content.innerHTML = `
+                <div class="quiz-question">
+                    <div class="quiz-question-num">題目 ${currentQuestion + 1} / ${quizQuestions.length}</div>
+                    <div class="quiz-chinese-hint">
+                        <span style="color:#667eea;font-weight:bold;">中文：</span>${q.chinese}
+                        <button onclick="speak('${q.chinese}', 'zh-TW')" style="margin-left:10px;font-size:1.2rem;border:none;background:none;cursor:pointer;">🔊</button>
+                    </div>
+                    <div class="quiz-word-hint" style="text-align:center;color:#888;font-size:0.9rem;margin-bottom:15px;">
+                        字母數：${word.length} 個字母
+                    </div>
+                    <div class="quiz-input-container" id="letter-inputs">
+                        ${word.split('').map((char, i) => 
+                            `<input type="text" class="letter-box" maxlength="1" data-index="${i}" data-char="${char}" 
+                             onkeyup="handleKeyUp(event, ${i})" oninput="handleInput(event, ${i})">`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('quiz-actions').innerHTML = `
+                <button class="quiz-btn check" onclick="checkAnswer()">✓ 檢查答案</button>
+                <button class="quiz-btn hint" onclick="showHint()">💡 提示一個字母</button>
+            `;
+            
+            // Focus first input
+            setTimeout(() => {
+                const firstInput = document.querySelector('.letter-box');
+                if (firstInput) firstInput.focus();
+            }, 100);
+        }
+
+        function handleInput(e, index) {
+            const value = e.target.value.toLowerCase();
+            e.target.value = value;
+        }
+
+        function handleKeyUp(e, index) {
+            const inputs = document.querySelectorAll('.letter-box');
+            
+            if (e.key === 'Backspace' && index > 0 && !e.target.value) {
+                inputs[index - 1].focus();
+            } else if (e.key !== 'Backspace' && e.key !== 'Enter' && index < inputs.length - 1) {
+                if (e.target.value) {
+                    inputs[index + 1].focus();
+                }
+            } else if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        }
+
+        function showHint() {
+            const inputs = document.querySelectorAll('.letter-box');
+            const emptyInputs = [];
+            
+            inputs.forEach((input, i) => {
+                if (!input.classList.contains('correct') && !input.value) {
+                    emptyInputs.push({input, index: i});
+                }
+            });
+            
+            if (emptyInputs.length > 0) {
+                const random = emptyInputs[Math.floor(Math.random() * emptyInputs.length)];
+                const char = random.input.dataset.char;
+                random.input.value = char;
+                random.input.classList.add('hint');
+                random.input.disabled = true;
+                hintUsed = true;
+            }
+        }
+
+        function checkAnswer() {
+            const inputs = document.querySelectorAll('.letter-box');
+            let allCorrect = true;
+            const word = quizQuestions[currentQuestion].word;
+            
+            inputs.forEach(input => {
+                const userChar = input.value.toLowerCase();
+                const correctChar = input.dataset.char;
+                
+                if (userChar === correctChar) {
+                    input.classList.add('correct');
+                    input.disabled = true;
+                } else {
+                    input.classList.add('wrong');
+                    input.value = correctChar;
+                    input.disabled = true;
+                    allCorrect = false;
+                }
+            });
+            
+            // 顯示正確答案並可發音
+            const q = quizQuestions[currentQuestion];
+            const resultDiv = document.createElement('div');
+            resultDiv.style.cssText = 'text-align:center;margin-top:20px;padding:15px;background:#fff;border-radius:10px;';
+            resultDiv.innerHTML = `
+                <div style="font-size:1.5rem;font-weight:bold;color:${allCorrect ? '#28a745' : '#dc3545'};">
+                    ${allCorrect ? '✓ 正確！' : '✗ 錯誤'}
+                </div>
+                <div style="font-size:1.3rem;margin-top:10px;color:#333;">
+                    ${q.word} <button onclick="speak('${q.word}', 'en')" style="font-size:1.2rem;border:none;background:none;cursor:pointer;">🔊</button>
+                </div>
+            `;
+            document.querySelector('.quiz-question').appendChild(resultDiv);
+            
+            if (allCorrect && !hintUsed) {
+                score++;
+                document.getElementById('current-score').textContent = score;
+                // 答對自動播放發音
+                speak(word, 'en');
+            }
+            
+            document.getElementById('quiz-actions').innerHTML = `
+                <button class="quiz-btn next" onclick="nextQuestion()">下一題 →</button>
+            `;
+        }
+
+        function nextQuestion() {
+            hintUsed = false;
+            currentQuestion++;
+            if (currentQuestion < quizQuestions.length) {
+                showQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            const percentage = Math.round((score / quizQuestions.length) * 100);
+            let message = '', emoji = '';
+            
+            if (percentage >= 90) { message = '太棒了！你已經掌握了這些單字！'; emoji = '🎉'; }
+            else if (percentage >= 70) { message = '做得很好！繼續加油！'; emoji = '👍'; }
+            else if (percentage >= 50) { message = '還不錯！多練習會更好！'; emoji = '💪'; }
+            else { message = '需要多練習哦！加油！'; emoji = '📚'; }
+            
+            document.getElementById('quiz-content').innerHTML = `
+                <div class="quiz-result">
+                    <h2>${emoji} 測驗完成！</h2>
+                    <div class="quiz-result-score">${score} / ${quizQuestions.length}</div>
+                    <div class="quiz-result-message">${message}</div>
+                </div>
+            `;
+            
+            document.getElementById('quiz-actions').innerHTML = `
+                <button class="quiz-btn restart" onclick="document.getElementById('quiz-container').style.display='none';selectedLetters=[];initLetterGrid();">🔄 再測一次</button>
+            `;
+            
+            document.getElementById('quiz-score').textContent = score;
+        }
+
+        // Word List
+        function showWordList() {
+            const list = document.getElementById('word-list');
+            list.innerHTML = vocabulary.map(word => `
+                <div class="word-item">
+                    <div class="word-info">
+                        <div class="num">#${word.num}</div>
+                        <div class="english">${word.word} <span style="color:#667eea;font-size:0.85rem">${word.pos}</span></div>
+                        <div class="chinese">${word.chinese}</div>
+                    </div>
+                    <button class="word-speak" onclick="speak('${word.word}', 'en')">🔊</button>
+                </div>
+            `).join('');
+        }
+
+        function filterWords() {
+            const search = document.getElementById('search-input').value.toLowerCase();
+            const list = document.getElementById('word-list');
+            
+            const filtered = vocabulary.filter(word => 
+                word.word.toLowerCase().includes(search) || 
+                word.chinese.includes(search)
+            );
+            
+            list.innerHTML = filtered.map(word => `
+                <div class="word-item">
+                    <div class="word-info">
+                        <div class="num">#${word.num}</div>
+                        <div class="english">${word.word} <span style="color:#667eea;font-size:0.85rem">${word.pos}</span></div>
+                        <div class="chinese">${word.chinese}</div>
+                    </div>
+                    <button class="word-speak" onclick="speak('${word.word}', 'en')">🔊</button>
+                </div>
+            `).join('');
+        }
+
+        // Initialize
+        updateCard();
+    </script>
+</body>
+</html>
