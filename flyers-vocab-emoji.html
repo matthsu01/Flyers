@@ -1,0 +1,1851 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flyers 單字練習 - 完整版（含圖示）</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        header p { font-size: 1.1rem; opacity: 0.9; }
+        
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item { text-align: center; color: white; }
+        .stat-num { font-size: 2rem; font-weight: bold; }
+        .stat-label { font-size: 0.9rem; opacity: 0.8; }
+        
+        .mode-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .mode-tab {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .mode-tab:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        
+        .mode-tab.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .section { display: none; animation: fadeIn 0.3s; }
+        .section.active { display: block; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Flashcard Styles */
+        .flashcard-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .flashcard {
+            width: 420px;
+            height: 400px;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+        
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        
+        .flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+        
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .flashcard-front { background: white; }
+        
+        .flashcard-back {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            transform: rotateY(180deg);
+        }
+        
+        .flashcard .word {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .flashcard .pos {
+            font-size: 1rem;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .flashcard-back .pos { color: rgba(255,255,255,0.8); }
+        .flashcard .chinese { font-size: 1.3rem; margin-top: 8px; }
+        
+        .flashcard-emoji {
+            font-size: 5rem;
+            margin: 15px 0;
+            line-height: 1;
+        }
+        
+        .speak-btn {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: transform 0.2s;
+        }
+        
+        .speak-btn:hover { transform: scale(1.2); }
+        
+        .flashcard-controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .control-btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        .control-btn.primary { background: white; color: #667eea; }
+        .control-btn.secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            max-width: 420px;
+            height: 8px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: white;
+            transition: width 0.3s;
+        }
+        
+        .progress-text { color: white; font-size: 0.95rem; }
+        
+        /* Filter Section */
+        .filter-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .filter-title {
+            font-size: 1.3rem;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .letter-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .letter-btn {
+            width: 45px;
+            height: 45px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            background: white;
+            color: #667eea;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .letter-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .letter-btn.selected {
+            background: #667eea;
+            color: white;
+        }
+        
+        .letter-count {
+            font-size: 0.7rem;
+            display: block;
+            margin-top: -2px;
+        }
+        
+        .filter-info {
+            text-align: center;
+            color: #666;
+            margin-top: 15px;
+            font-size: 0.95rem;
+        }
+        
+        /* Quiz Styles */
+        .quiz-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .quiz-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .quiz-score {
+            font-size: 1.3rem;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .quiz-question {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .quiz-question-num {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        
+        .quiz-chinese-hint {
+            text-align: center;
+            font-size: 1.5rem;
+            color: #555;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 12px;
+            border: 2px solid #667eea;
+        }
+        
+        .quiz-input-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .letter-box {
+            width: 50px;
+            height: 55px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1.5rem;
+            text-align: center;
+            text-transform: lowercase;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        
+        .letter-box:focus {
+            outline: none;
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .letter-box.correct {
+            border-color: #28a745;
+            background: #d4edda;
+            color: #28a745;
+        }
+        
+        .letter-box.wrong {
+            border-color: #dc3545;
+            background: #f8d7da;
+            color: #dc3545;
+        }
+        
+        .letter-box.hint {
+            border-color: #ffc107;
+            background: #fff3cd;
+        }
+        
+        .quiz-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .quiz-btn {
+            padding: 12px 35px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        .quiz-btn.check { background: #667eea; color: white; }
+        .quiz-btn.next { background: #28a745; color: white; }
+        .quiz-btn.restart { background: #6c757d; color: white; }
+        .quiz-btn.hint { background: #ffc107; color: #333; }
+        
+        .quiz-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .quiz-result {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .quiz-result h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .quiz-result-score {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #667eea;
+            margin: 20px 0;
+        }
+        
+        .quiz-result-message {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        /* Word List */
+        .word-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .word-item {
+            background: white;
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        
+        .word-item:hover { transform: translateY(-2px); }
+        .word-info { flex: 1; }
+        .word-info .num { color: #999; font-size: 0.8rem; }
+        .word-info .english { font-weight: bold; color: #333; font-size: 1.05rem; }
+        .word-info .chinese { color: #666; font-size: 0.9rem; margin-top: 4px; }
+        .word-info .emoji { font-size: 1.5rem; margin-right: 8px; }
+        
+        .word-speak {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        
+        .word-speak:hover { opacity: 1; }
+        
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-bar input {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+        
+        .filter-bar input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        /* Responsive */
+        @media (max-width: 600px) {
+            .flashcard { width: 340px; height: 380px; }
+            .flashcard .word { font-size: 1.7rem; }
+            .flashcard-emoji { font-size: 4rem; }
+            .letter-box { width: 40px; height: 45px; font-size: 1.2rem; }
+            .letter-btn { width: 38px; height: 38px; font-size: 0.95rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎓 Flyers 單字練習</h1>
+            <p>劍橋兒童英語認證 Flyers 完整單字表 | 540個核心單字 | 含圖示輔助記憶</p>
+        </header>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-num">540</div>
+                <div class="stat-label">單字總數</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num" id="learned-count">0</div>
+                <div class="stat-label">已學習</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num" id="quiz-score">0</div>
+                <div class="stat-label">測驗得分</div>
+            </div>
+        </div>
+        
+        <div class="mode-tabs">
+            <button class="mode-tab active" onclick="switchMode('flashcard')">📇 單字卡</button>
+            <button class="mode-tab" onclick="switchMode('quiz')">📝 填空測驗</button>
+            <button class="mode-tab" onclick="switchMode('list')">📋 單字列表</button>
+        </div>
+        
+        <!-- Flashcard Section -->
+        <div id="flashcard-section" class="section active">
+            <div class="flashcard-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="flashcard-progress"></div>
+                </div>
+                <div class="progress-text" id="flashcard-progress-text">1 / 540</div>
+                
+                <div class="flashcard" id="flashcard" onclick="flipCard()">
+                    <div class="flashcard-inner">
+                        <div class="flashcard-front">
+                            <div class="flashcard-emoji" id="card-emoji">🕐</div>
+                            <div class="word" id="card-word">a.m.</div>
+                            <div class="pos" id="card-pos">adv.</div>
+                            <button class="speak-btn" id="speak-en-btn" onclick="event.stopPropagation(); speakCurrentEn()">🔊 英</button>
+                        </div>
+                        <div class="flashcard-back">
+                            <div class="flashcard-emoji" id="card-emoji-back">🕐</div>
+                            <div class="word" id="card-word-back">a.m.</div>
+                            <div class="pos" id="card-pos-back">adv.</div>
+                            <div class="chinese" id="card-chinese">上午</div>
+                            <button class="speak-btn" id="speak-zh-btn" onclick="event.stopPropagation(); speakCurrentZh()">🔊 中</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flashcard-controls">
+                    <button class="control-btn secondary" onclick="prevCard()">⬅️ 上一個</button>
+                    <button class="control-btn primary" onclick="speakCurrent()">🔊 發音</button>
+                    <button class="control-btn secondary" onclick="nextCard()">下一個 ➡️</button>
+                </div>
+                <div class="flashcard-controls">
+                    <button class="control-btn secondary" onclick="shuffleCards()">🔀 隨機排序</button>
+                    <button class="control-btn secondary" onclick="resetCards()">🔄 重置進度</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quiz Section -->
+        <div id="quiz-section" class="section">
+            <div class="filter-section">
+                <div class="filter-title">🎯 選擇要測驗的字母開頭的單字</div>
+                <div class="letter-grid" id="letter-grid"></div>
+                <div class="filter-info" id="filter-info">請選擇字母後開始測驗</div>
+            </div>
+            
+            <div class="quiz-container" id="quiz-container" style="display: none;">
+                <div class="quiz-header">
+                    <div class="quiz-score">得分: <span id="current-score">0</span> / <span id="total-questions">10</span></div>
+                </div>
+                <div id="quiz-content"></div>
+                <div class="quiz-actions" id="quiz-actions"></div>
+            </div>
+        </div>
+        
+        <!-- Word List Section -->
+        <div id="list-section" class="section">
+            <div class="filter-bar">
+                <input type="text" id="search-input" placeholder="搜尋單字（英文或中文）..." oninput="filterWords()">
+            </div>
+            <div class="word-list" id="word-list"></div>
+        </div>
+    </div>
+
+    <script>
+        // 單字對應的 Emoji 圖示（智能匹配）
+        const wordEmojis = {
+            // 時間相關
+            'a.m.': '🕐', 'p.m.': '🕑', 'after': '⏰', 'before': '⏮️', 'now': '⏱️',
+            'time': '⏰', 'today': '📅', 'tomorrow': '📅', 'yesterday': '📅',
+            'monday': '📅', 'tuesday': '📅', 'wednesday': '📅', 'thursday': '📅',
+            'friday': '📅', 'saturday': '📅', 'sunday': '📅',
+            'january': '📅', 'february': '📅', 'march': '📅', 'april': '📅',
+            'may': '📅', 'june': '📅', 'july': '📅', 'august': '📅',
+            'september': '📅', 'october': '📅', 'november': '📅', 'december': '📅',
+            'spring': '🌸', 'summer': '☀️', 'autumn': '🍂', 'fall': '🍂', 'winter': '❄️',
+            'morning': '🌅', 'afternoon': '🌤️', 'evening': '🌆', 'night': '🌙',
+            'hour': '⏱️', 'minute': '⏱️', 'second': '⏱️', 'week': '📅', 'month': '📅', 'year': '📅',
+            'century': '📚', 'date': '📅', 'calendar': '📅', 'ago': '⏮️',
+            
+            // 動物
+            'animal': '🐾', 'dog': '🐕', 'cat': '🐱', 'bird': '🐦', 'fish': '🐟',
+            'horse': '🐴', 'cow': '🐄', 'pig': '🐷', 'sheep': '🐑', 'goat': '🐐',
+            'chicken': '🐔', 'duck': '🦆', 'rabbit': '🐰', 'mouse': '🐭', 'rat': '🐀',
+            'elephant': '🐘', 'lion': '🦁', 'tiger': '🐯', 'bear': '🐻', 'monkey': '🐵',
+            'giraffe': '🦒', 'zebra': '🦓', 'hippo': '🦛', 'rhino': '🦏', 'crocodile': '🐊',
+            'snake': '🐍', 'frog': '🐸', 'turtle': '🐢', 'tortoise': '🐢', 'lizard': '🦎',
+            'dinosaur': '🦕', 'dragon': '🐉', 'camel': '🐪', 'panda': '🐼', 'koala': '🐨',
+            'kangaroo': '🦘', 'fox': '🦊', 'wolf': '🐺', 'deer': '🦌', 'owl': '🦉',
+            'eagle': '🦅', 'parrot': '🦜', 'penguin': '🐧', 'flamingo': '🦩', 'swan': '🦢',
+            'peacock': '🦚', 'butterfly': '🦋', 'bee': '🐝', 'ant': '🐜', 'beetle': '🪲',
+            'spider': '🕷️', 'snail': '🐌', 'worm': '🪱', 'dolphin': '🐬', 'whale': '🐋',
+            'shark': '🦈', 'octopus': '🐙', 'crab': '🦀', 'lobster': '🦞', 'shrimp': '🦐',
+            'insect': '🐛', 'creature': '🐾',
+            
+            // 食物
+            'food': '🍎', 'fruit': '🍇', 'apple': '🍎', 'orange': '🍊', 'banana': '🍌',
+            'grape': '🍇', 'strawberry': '🍓', 'cherry': '🍒', 'peach': '🍑', 'pear': '🍐',
+            'watermelon': '🍉', 'lemon': '🍋', 'pineapple': '🍍', 'mango': '🥭', 'coconut': '🥥',
+            'vegetable': '🥬', 'carrot': '🥕', 'potato': '🥔', 'tomato': '🍅', 'onion': '🧅',
+            'cabbage': '🥬', 'lettuce': '🥬', 'pea': '🟢', 'bean': '🫘', 'corn': '🌽',
+            'pepper': '🫑', 'cucumber': '🥒', 'pumpkin': '🎃', 'mushroom': '🍄',
+            'bread': '🍞', 'rice': '🍚', 'noodle': '🍜', 'pasta': '🍝', 'pizza': '🍕',
+            'hamburger': '🍔', 'sandwich': '🥪', 'hot dog': '🌭', 'taco': '🌮', 'burrito': '🌯',
+            'meat': '🥩', 'chicken': '🍗', 'beef': '🥩', 'pork': '🥓', 'fish': '🐟',
+            'egg': '🥚', 'cheese': '🧀', 'butter': '🧈', 'milk': '🥛', 'yogurt': '🥛',
+            'cream': '🍰', 'ice cream': '🍦', 'chocolate': '🍫', 'candy': '🍬', 'cookie': '🍪',
+            'biscuit': '🍪', 'cake': '🎂', 'pie': '🥧', 'donut': '🍩', 'pancake': '🥞',
+            'waffle': '🧇', 'popcorn': '🍿', 'chip': '🍟', 'snack': '🍿', 'cereal': '🥣',
+            'soup': '🍲', 'salad': '🥗', 'breakfast': '🍳', 'lunch': '🥪', 'dinner': '🍽️',
+            'meal': '🍽️', 'restaurant': '🍽️', 'cafe': '☕', 'kitchen': '🍳',
+            'salt': '🧂', 'sugar': '🍬', 'pepper': '🧂', 'spoon': '🥄', 'fork': '🍴',
+            'knife': '🔪', 'chopsticks': '🥢', 'plate': '🍽️', 'bowl': '🥣', 'cup': '☕',
+            'glass': '🥛', 'bottle': '🍾', 'tea': '🍵', 'coffee': '☕', 'juice': '🧃',
+            'water': '💧', 'drink': '🥤', 'soda': '🥤', 'lemonade': '🍋',
+            
+            // 交通工具
+            'car': '🚗', 'bus': '🚌', 'train': '🚆', 'plane': '✈️', 'airplane': '✈️',
+            'ship': '🚢', 'boat': '⛵', 'bicycle': '🚲', 'bike': '🚲', 'motorcycle': '🏍️',
+            'truck': '🚚', 'taxi': '🚕', 'subway': '🚇', 'helicopter': '🚁', 'rocket': '🚀',
+            'ambulance': '🚑', 'fire engine': '🚒', 'police car': '🚓', 'scooter': '🛵',
+            'wheel': '⚙️', 'tyre': '⚫', 'traffic': '🚦', 'road': '🛣️', 'street': '🛣️',
+            'bridge': '🌉', 'tunnel': '🕳️', 'airport': '✈️', 'station': '🚉', 'port': '⚓',
+            'parking': '🅿️', 'fuel': '⛽', 'gas': '⛽',
+            
+            // 地點
+            'place': '📍', 'home': '🏠', 'house': '🏠', 'apartment': '🏢', 'room': '🚪',
+            'bedroom': '🛏️', 'bathroom': '🚿', 'kitchen': '🍳', 'living room': '🛋️',
+            'garden': '🏡', 'park': '🌳', 'school': '🏫', 'classroom': '🏫', 'office': '🏢',
+            'hospital': '🏥', 'doctor': '👨‍⚕️', 'dentist': '🦷', 'pharmacy': '💊',
+            'bank': '🏦', 'shop': '🏪', 'store': '🏪', 'supermarket': '🛒', 'market': '🛒',
+            'library': '📚', 'museum': '🏛️', 'theatre': '🎭', 'cinema': '🎬', 'movie': '🎬',
+            'stadium': '🏟️', 'gym': '🏋️', 'swimming pool': '🏊', 'beach': '🏖️',
+            'mountain': '⛰️', 'forest': '🌲', 'river': '🏞️', 'lake': '🏞️', 'ocean': '🌊',
+            'sea': '🌊', 'island': '🏝️', 'desert': '🏜️', 'countryside': '🌾', 'farm': '🌾',
+            'zoo': '🦁', 'circus': '🎪', 'amusement park': '🎡', 'castle': '🏰', 'palace': '🏰',
+            'church': '⛪', 'temple': '🛕', 'mosque': '🕌', 'university': '🎓', 'college': '🎓',
+            'hotel': '🏨', 'restaurant': '🍽️', 'cafe': '☕', 'bar': '🍻', 'club': '🎭',
+            'factory': '🏭', 'laboratory': '🔬', 'court': '⚖️', 'prison': '🔒',
+            
+            // 人物
+            'person': '👤', 'people': '👥', 'man': '👨', 'woman': '👩', 'boy': '👦',
+            'girl': '👧', 'baby': '👶', 'child': '👶', 'children': '👧👦', 'adult': '👨',
+            'family': '👨‍👩‍👧‍👦', 'parent': '👨‍👩‍👧', 'father': '👨', 'mother': '👩', 'dad': '👨',
+            'mom': '👩', 'son': '👦', 'daughter': '👧', 'brother': '👦', 'sister': '👧',
+            'grandfather': '👴', 'grandmother': '👵', 'grandpa': '👴', 'grandma': '👵',
+            'uncle': '👨', 'aunt': '👩', 'cousin': '👦', 'nephew': '👦', 'niece': '👧',
+            'husband': '👨', 'wife': '👩', 'friend': '🤝', 'neighbor': '🏘️', 'stranger': '👤',
+            'teacher': '👨‍🏫', 'student': '👨‍🎓', 'doctor': '👨‍⚕️', 'nurse': '👩‍⚕️',
+            'police': '👮', 'officer': '👮', 'firefighter': '👨‍🚒', 'soldier': '🎖️',
+            'chef': '👨‍🍳', 'cook': '👨‍🍳', 'waiter': '🧑‍🍳', 'waitress': '🧑‍🍳',
+            'driver': '🚗', 'pilot': '✈️', 'astronaut': '🚀', 'scientist': '🔬',
+            'artist': '🎨', 'painter': '🎨', 'musician': '🎵', 'singer': '🎤',
+            'actor': '🎭', 'actress': '🎭', 'dancer': '💃', 'athlete': '🏃', 'player': '⚽',
+            'farmer': '👨‍🌾', 'fisherman': '🎣', 'mechanic': '🔧', 'engineer': '👷',
+            'architect': '🏗️', 'lawyer': '⚖️', 'judge': '⚖️', 'journalist': '📰',
+            'writer': '✍️', 'author': '📖', 'reporter': '📰', 'photographer': '📷',
+            'businessman': '💼', 'manager': '👔', 'boss': '👔', 'worker': '👷', 'employee': '👷',
+            'king': '👑', 'queen': '👑', 'prince': '🤴', 'princess': '👸', 'knight': '⚔️',
+            'pirate': '🏴‍☠️', 'wizard': '🧙', 'witch': '🧙‍♀️', 'fairy': '🧚', 'angel': '👼',
+            'monster': '👹', 'ghost': '👻', 'vampire': '🧛', 'zombie': '🧟', 'robot': '🤖',
+            'alien': '👽', 'superhero': '🦸', 'villain': '🦹', 'clown': '🤡', 'magician': '🎩',
+            
+            // 身體部位
+            'body': '🧍', 'head': '🗣️', 'face': '😊', 'eye': '👁️', 'ear': '👂',
+            'nose': '👃', 'mouth': '👄', 'tooth': '🦷', 'teeth': '🦷', 'tongue': '👅',
+            'hair': '💇', 'neck': '🗣️', 'shoulder': '💪', 'arm': '💪', 'elbow': '💪',
+            'wrist': '🤚', 'hand': '✋', 'finger': '☝️', 'thumb': '👍', 'nail': '💅',
+            'chest': '🫀', 'back': '🔙', 'stomach': '🫃', 'leg': '🦵', 'knee': '🦵',
+            'ankle': '🦶', 'foot': '🦶', 'feet': '🦶', 'toe': '🦶', 'skin': '🤚',
+            'bone': '🦴', 'muscle': '💪', 'heart': '❤️', 'brain': '🧠', 'blood': '🩸',
+            
+            // 衣服
+            'clothes': '👕', 'clothing': '👕', 'shirt': '👕', 't-shirt': '👕', 'blouse': '👚',
+            'pants': '👖', 'trousers': '👖', 'jeans': '👖', 'shorts': '🩳', 'skirt': '👗',
+            'dress': '👗', 'coat': '🧥', 'jacket': '🧥', 'sweater': '🧶', 'hoodie': '👕',
+            'suit': '🤵', 'uniform': '👮', 'costume': '🎭', 'pajamas': '🛌', 'underwear': '🩲',
+            'sock': '🧦', 'shoe': '👟', 'sneaker': '👟', 'boot': '👢', 'sandal': '👡',
+            'slipper': '🥿', 'hat': '🎩', 'cap': '🧢', 'helmet': '⛑️', 'glasses': '👓',
+            'sunglasses': '🕶️', 'watch': '⌚', 'ring': '💍', 'necklace': '📿', 'bracelet': '📿',
+            'earring': '💎', 'belt': '⬛', 'tie': '👔', 'scarf': '🧣', 'glove': '🧤',
+            'pocket': '👖', 'button': '🔘', 'zip': '🖱️', 'size': '📏', 'color': '🎨',
+            
+            // 顏色
+            'red': '🔴', 'blue': '🔵', 'green': '🟢', 'yellow': '🟡', 'orange': '🟠',
+            'purple': '🟣', 'pink': '💗', 'brown': '🟤', 'black': '⚫', 'white': '⚪',
+            'gray': '⚫', 'grey': '⚫', 'gold': '🟡', 'silver': '⚪', 'colorful': '🌈',
+            
+            // 數字
+            'number': '🔢', 'zero': '0️⃣', 'one': '1️⃣', 'two': '2️⃣', 'three': '3️⃣',
+            'four': '4️⃣', 'five': '5️⃣', 'six': '6️⃣', 'seven': '7️⃣', 'eight': '8️⃣',
+            'nine': '9️⃣', 'ten': '🔟', 'hundred': '💯', 'thousand': '1️⃣', 'million': '💰',
+            'first': '1️⃣', 'second': '2️⃣', 'third': '3️⃣', 'fourth': '4️⃣', 'fifth': '5️⃣',
+            'half': '½', 'quarter': '¼', 'double': '2️⃣', 'triple': '3️⃣',
+            'add': '➕', 'subtract': '➖', 'multiply': '✖️', 'divide': '➗', 'equal': '✅',
+            'math': '🔢', 'mathematics': '🔢', 'maths': '🔢', 'count': '🔢', 'calculate': '🔢',
+            
+            // 動作
+            'action': '🏃', 'move': '🏃', 'run': '🏃', 'walk': '🚶', 'jump': '🦘',
+            'hop': '🦘', 'skip': '🏃‍♀️', 'dance': '💃', 'swim': '🏊', 'fly': '✈️',
+            'climb': '🧗', 'crawl': '🧒', 'roll': '🔄', 'spin': '🌀', 'turn': '↩️',
+            'sit': '🪑', 'stand': '🧍', 'lie': '🛏️', 'sleep': '😴', 'wake': '⏰',
+            'eat': '🍽️', 'drink': '🥤', 'bite': '😬', 'chew': '😋', 'swallow': '🥤',
+            'talk': '🗣️', 'speak': '🗣️', 'say': '💬', 'tell': '💬', 'ask': '❓',
+            'shout': '📢', 'whisper': '🤫', 'sing': '🎤', 'read': '📖', 'write': '✍️',
+            'draw': '🎨', 'paint': '🎨', 'color': '🎨', 'cut': '✂️', 'paste': '📎',
+            'glue': '🧴', 'fold': '📄', 'tear': '💔', 'throw': '🎾', 'catch': '🧤',
+            'kick': '⚽', 'hit': '🎾', 'throw': '🎾', 'catch': '🧤', 'pass': '➡️',
+            'pick': '✋', 'drop': '⬇️', 'carry': '📦', 'lift': '🏋️', 'push': '💪',
+            'pull': '💪', 'open': '🔓', 'close': '🔒', 'lock': '🔒', 'unlock': '🔓',
+            'turn on': '💡', 'turn off': '🌑', 'switch': '🔘', 'press': '👆', 'touch': '👆',
+            'hold': '✊', 'grab': '✊', 'release': '✋', 'shake': '🤝', 'wave': '👋',
+            'clap': '👏', 'point': '☝️', 'thumbs up': '👍', 'thumbs down': '👎',
+            'smile': '😊', 'laugh': '😂', 'cry': '😢', 'frown': '☹️', 'wink': '😉',
+            'blink': '👀', 'nod': '🙂', 'shake head': '🙅', 'shrug': '🤷',
+            'think': '🤔', 'remember': '🧠', 'forget': '🤔', 'learn': '📚', 'teach': '👨‍🏫',
+            'study': '📚', 'practice': '📝', 'exercise': '🏋️', 'train': '🏃', 'work': '💼',
+            'play': '🎮', 'rest': '😴', 'relax': '😌', 'wait': '⏳', 'hurry': '🏃',
+            'start': '▶️', 'begin': '▶️', 'stop': '⏹️', 'finish': '✅', 'end': '🔚',
+            'continue': '➡️', 'repeat': '🔄', 'return': '↩️', 'stay': '🏠', 'leave': '👋',
+            'arrive': '🛬', 'depart': '🛫', 'enter': '🚪', 'exit': '🚪', 'visit': '🚶',
+            'travel': '✈️', 'explore': '🗺️', 'discover': '🔍', 'find': '🔍', 'search': '🔍',
+            'look': '👀', 'watch': '👀', 'see': '👀', 'hear': '👂', 'listen': '👂',
+            'feel': '✋', 'smell': '👃', 'taste': '👅', 'try': '💪', 'attempt': '💪',
+            'succeed': '✅', 'fail': '❌', 'win': '🏆', 'lose': '💔', 'draw': '🤝',
+            'compete': '🏆', 'race': '🏃', 'fight': '🥊', 'argue': '🗣️', 'agree': '🤝',
+            'disagree': '🙅', 'decide': '✅', 'choose': '✅', 'prefer': '❤️', 'like': '👍',
+            'love': '❤️', 'hate': '👎', 'want': '💭', 'need': '❗', 'wish': '💫',
+            'hope': '🌈', 'dream': '💭', 'imagine': '💭', 'create': '🎨', 'build': '🏗️',
+            'make': '🔧', 'fix': '🔧', 'repair': '🔧', 'break': '💔', 'destroy': '💥',
+            'clean': '🧹', 'wash': '🚿', 'dry': '☀️', 'iron': '👔', 'fold': '👕',
+            'cook': '👨‍🍳', 'bake': '🥖', 'fry': '🍳', 'boil': '🥘', 'grill': '🍖',
+            'serve': '🍽️', 'order': '📋', 'pay': '💳', 'buy': '🛒', 'sell': '💰',
+            'shop': '🛍️', 'save': '💰', 'spend': '💸', 'borrow': '📚', 'lend': '📚',
+            'give': '🎁', 'receive': '📥', 'take': '✋', 'bring': '📦', 'send': '📤',
+            'get': '📥', 'keep': '🗃️', 'store': '🏪', 'organize': '📋', 'sort': '📊',
+            'grow': '🌱', 'plant': '🌱', 'water': '💧', 'cut': '✂️', 'trim': '✂️',
+            
+            // 學校相關
+            'school': '🏫', 'class': '📚', 'lesson': '📖', 'subject': '📚', 'exam': '📝',
+            'test': '📝', 'quiz': '❓', 'homework': '📚', 'assignment': '📝', 'project': '📋',
+            'book': '📖', 'notebook': '📓', 'textbook': '📚', 'dictionary': '📖', 'encyclopedia': '📚',
+            'pen': '🖊️', 'pencil': '✏️', 'eraser': '🧹', 'ruler': '📏', 'sharpener': '✏️',
+            'paper': '📄', 'page': '📄', 'paragraph': '📝', 'sentence': '📝', 'word': '🔤',
+            'letter': '✉️', 'alphabet': '🔤', 'spelling': '🔤', 'grammar': '📖', 'vocabulary': '📚',
+            'reading': '📖', 'writing': '✍️', 'speaking': '🗣️', 'listening': '👂',
+            'language': '🌍', 'English': '🇬🇧', 'Chinese': '🇨🇳', 'science': '🔬', 'history': '📜',
+            'geography': '🗺️', 'music': '🎵', 'art': '🎨', 'P.E.': '🏃', 'sports': '⚽',
+            'library': '📚', 'computer': '💻', 'internet': '🌐', 'email': '📧', 'website': '🌐',
+            
+            // 運動
+            'sport': '⚽', 'game': '🎮', 'match': '🏆', 'team': '👥', 'player': '🏃',
+            'football': '⚽', 'soccer': '⚽', 'basketball': '🏀', 'volleyball': '🏐',
+            'tennis': '🎾', 'badminton': '🏸', 'table tennis': '🏓', 'ping pong': '🏓',
+            'baseball': '⚾', 'golf': '⛳', 'hockey': '🏒', 'cricket': '🏏', 'rugby': '🏉',
+            'swimming': '🏊', 'diving': '🤿', 'surfing': '🏄', 'sailing': '⛵', 'rowing': '🚣',
+            'skiing': '⛷️', 'snowboarding': '🏂', 'skating': '⛸️', 'snowman': '⛄', 'snowball': '⚪',
+            'running': '🏃', 'jogging': '🏃', 'cycling': '🚴', 'hiking': '🥾', 'climbing': '🧗',
+            'gymnastics': '🤸', 'yoga': '🧘', 'boxing': '🥊', 'karate': '🥋', 'judo': '🥋',
+            'winner': '🏆', 'loser': '💔', 'score': '💯', 'goal': '⚽', 'point': '🎯',
+            'medal': '🏅', 'trophy': '🏆', 'prize': '🎁', 'award': '🏆', 'champion': '🏆',
+            
+            // 音樂
+            'music': '🎵', 'song': '🎵', 'melody': '🎵', 'tune': '🎵', 'rhythm': '🥁',
+            'piano': '🎹', 'guitar': '🎸', 'violin': '🎻', 'drum': '🥁', 'flute': '🎵',
+            'trumpet': '🎺', 'saxophone': '🎷', 'concert': '🎤', 'band': '🎸', 'orchestra': '🎻',
+            'singer': '🎤', 'composer': '🎼', 'conductor': '🎼', 'performance': '🎭', 'show': '🎭',
+            'stage': '🎭', 'theater': '🎭', 'theatre': '🎭', 'audience': '👥', 'applause': '👏',
+            
+            // 自然
+            'nature': '🌿', 'tree': '🌳', 'flower': '🌸', 'grass': '🌱', 'plant': '🌱',
+            'leaf': '🍃', 'branch': '🌿', 'root': '🌱', 'seed': '🌱', 'fruit': '🍎',
+            'sun': '☀️', 'moon': '🌙', 'star': '⭐', 'sky': '🌌', 'cloud': '☁️',
+            'rain': '🌧️', 'snow': '❄️', 'wind': '💨', 'storm': '⛈️', 'thunder': '⛈️',
+            'lightning': '⚡', 'rainbow': '🌈', 'fog': '🌫️', 'mist': '🌫️',
+            'earth': '🌍', 'planet': '🪐', 'space': '🌌', 'universe': '🌌', 'galaxy': '🌌',
+            'rock': '🪨', 'stone': '🪨', 'sand': '🏖️', 'soil': '🌱', 'mud': '🟤',
+            'water': '💧', 'river': '🏞️', 'stream': '🏞️', 'lake': '🏞️', 'pond': '🏞️',
+            'waterfall': '🌊', 'wave': '🌊', 'tide': '🌊', 'beach': '🏖️', 'shore': '🏖️',
+            'mountain': '⛰️', 'hill': '⛰️', 'valley': '🏞️', 'cave': '🕳️', 'cliff': '⛰️',
+            'forest': '🌲', 'jungle': '🌴', 'woods': '🌲', 'desert': '🏜️', 'oasis': '🌴',
+            'field': '🌾', 'meadow': '🌾', 'garden': '🌷', 'park': '🌳', 'farm': '🌾',
+            
+            // 天氣
+            'weather': '🌤️', 'sunny': '☀️', 'cloudy': '☁️', 'rainy': '🌧️', 'snowy': '❄️',
+            'windy': '💨', 'stormy': '⛈️', 'foggy': '🌫️', 'cold': '❄️', 'hot': '☀️',
+            'warm': '🌡️', 'cool': '🌬️', 'temperature': '🌡️', 'forecast': '🌤️', 'climate': '🌍',
+            
+            // 房子
+            'building': '🏢', 'house': '🏠', 'home': '🏠', 'room': '🚪', 'door': '🚪',
+            'window': '🪟', 'wall': '🧱', 'floor': '🪵', 'ceiling': '🏠', 'roof': '🏠',
+            'stairs': '🪜', 'elevator': '🛗', 'lift': '🛗', 'basement': '🏠', 'attic': '🏠',
+            'garage': '🚗', 'garden': '🌷', 'yard': '🌳', 'balcony': '🏠', 'terrace': '🏠',
+            'chimney': '🏠', 'fireplace': '🔥', 'furniture': '🛋️', 'table': '🪑', 'chair': '🪑',
+            'sofa': '🛋️', 'couch': '🛋️', 'bed': '🛏️', 'desk': '🖥️', 'shelf': '📚', 'bookshelf': '📚',
+            'lamp': '💡', 'light': '💡', 'mirror': '🪞', 'picture': '🖼️', 'painting': '🖼️',
+            'carpet': '🟫', 'rug': '🟫', 'curtain': '🪟', 'blind': '🪟', 'clock': '🕐',
+            'television': '📺', 'TV': '📺', 'radio': '📻', 'computer': '💻', 'phone': '📞',
+            'telephone': '📞', 'mobile': '📱', 'camera': '📷', 'video': '📹',
+            'fridge': '🧊', 'refrigerator': '🧊', 'freezer': '🧊', 'oven': '🔥', 'stove': '🍳',
+            'microwave': '📦', 'toaster': '🍞', 'blender': '🥤', 'kettle': '🫖', 'coffee maker': '☕',
+            'washing machine': '🧺', 'dryer': '🧺', 'vacuum': '🧹', 'iron': '👔',
+            'towel': '🧻', 'soap': '🧼', 'shampoo': '🧴', 'toothbrush': '🪥', 'toothpaste': '🦷',
+            'comb': '💇', 'brush': '🪮', 'mirror': '🪞', 'toilet': '🚽', 'shower': '🚿',
+            'bath': '🛁', 'bathtub': '🛁', 'sink': '🚰', 'faucet': '🚰', 'tap': '🚰',
+            
+            // 工具
+            'tool': '🔧', 'hammer': '🔨', 'screwdriver': '🪛', 'wrench': '🔧', 'pliers': '🔧',
+            'saw': '🪚', 'drill': '🔧', 'nail': '📍', 'screw': '🔧', 'bolt': '🔧', 'nut': '🔧',
+            'tape': '📦', 'glue': '🧴', 'rope': '🪢', 'string': '🧵', 'wire': '〰️',
+            'scissors': '✂️', 'knife': '🔪', 'blade': '🔪', 'axe': '🪓', 'shovel': '🪓',
+            'rake': '🧹', 'hoe': '🧹', 'ladder': '🪜', 'bucket': '🪣', 'basket': '🧺',
+            'box': '📦', 'bag': '🛍️', 'backpack': '🎒', 'suitcase': '🧳', 'briefcase': '💼',
+            'purse': '👛', 'wallet': '👛', 'pocket': '👖',
+            
+            // 電子產品
+            'device': '📱', 'technology': '💻', 'computer': '💻', 'laptop': '💻', 'desktop': '🖥️',
+            'tablet': '📱', 'iPad': '📱', 'smartphone': '📱', 'phone': '📱', 'mobile': '📱',
+            'keyboard': '⌨️', 'mouse': '🖱️', 'screen': '🖥️', 'monitor': '🖥️', 'printer': '🖨️',
+            'scanner': '📠', 'speaker': '🔊', 'headphone': '🎧', 'earphone': '🎧', 'earbud': '🎧',
+            'microphone': '🎤', 'camera': '📷', 'video camera': '📹', 'remote': '📱',
+            'battery': '🔋', 'charger': '🔌', 'cable': '🔌', 'wire': '🔌', 'plug': '🔌',
+            'socket': '🔌', 'switch': '🔘', 'button': '🔘', 'wifi': '📶', 'bluetooth': '📶',
+            'app': '📱', 'software': '💻', 'program': '💻', 'file': '📄', 'folder': '📁',
+            'document': '📄', 'presentation': '📊', 'spreadsheet': '📊', 'database': '🗃️',
+            'email': '📧', 'message': '💬', 'chat': '💬', 'video call': '📹', 'meeting': '👥',
+            
+            // 醫療
+            'medicine': '💊', 'pill': '💊', 'tablet': '💊', 'injection': '💉', 'vaccine': '💉',
+            'hospital': '🏥', 'clinic': '🏥', 'pharmacy': '💊', 'drugstore': '💊',
+            'bandage': '🩹', 'plaster': '🩹', 'gauze': '🩹', 'cotton': '🧵', 'swab': '🧹',
+            'thermometer': '🌡️', 'stethoscope': '🩺', 'scale': '⚖️', 'weight': '⚖️',
+            'ambulance': '🚑', 'emergency': '🚨', 'first aid': '🩹', 'rescue': '🚁',
+            'disease': '🤒', 'illness': '🤒', 'sickness': '🤒', 'symptom': '🤒', 'pain': '😣',
+            'fever': '🤒', 'cold': '🤧', 'cough': '😷', 'headache': '🤕', 'stomachache': '🤢',
+            'allergy': '🤧', 'infection': '🦠', 'virus': '🦠', 'bacteria': '🦠',
+            'surgery': '🏥', 'operation': '🏥', 'treatment': '💊', 'therapy': '💊', 'recovery': '✅',
+            'health': '❤️', 'healthy': '💪', 'sick': '🤒', 'ill': '🤒', 'weak': '😵',
+            'x-ray': '🩺', 'scan': '🩺', 'MRI': '🩺', 'test': '🧪', 'examination': '🔍',
+            
+            // 職業
+            'job': '💼', 'career': '💼', 'profession': '🎓', 'occupation': '👔', 'work': '💼',
+            'business': '💼', 'company': '🏢', 'organization': '🏢', 'institution': '🏛️', 'agency': '🏢',
+            'industry': '🏭', 'factory': '🏭', 'workshop': '🔧', 'studio': '🎨', 'laboratory': '🔬',
+            'office': '🏢', 'department': '🏢', 'division': '🏢', 'team': '👥', 'group': '👥',
+            'employee': '👷', 'employer': '👔', 'colleague': '👥', 'coworker': '👥', 'partner': '🤝',
+            'boss': '👔', 'manager': '👔', 'director': '👔', 'supervisor': '👔', 'leader': '👑',
+            'salary': '💰', 'wage': '💰', 'income': '💰', 'money': '💰', 'payment': '💳',
+            'promotion': '📈', 'retirement': '👴', 'vacation': '🏖️', 'holiday': '🎉',
+            
+            // 金錢
+            'money': '💰', 'cash': '💵', 'coin': '🪙', 'bill': '💵', 'note': '💵',
+            'bank': '🏦', 'account': '💳', 'credit card': '💳', 'debit card': '💳', 'ATM': '🏦',
+            'price': '💰', 'cost': '💰', 'value': '💰', 'worth': '💰', 'budget': '📊',
+            'cheap': '💵', 'expensive': '💎', 'free': '🆓', 'discount': '🏷️', 'sale': '🏷️',
+            'buy': '🛒', 'sell': '💰', 'pay': '💳', 'spend': '💸', 'save': '💰', 'earn': '💰',
+            'rich': '💰', 'poor': '🪙', 'wealth': '💰', 'poverty': '🪙', 'charity': '❤️',
+            'tax': '💰', 'invoice': '📄', 'receipt': '🧾', 'check': '📝', 'cheque': '📝',
+            
+            // 社會
+            'society': '👥', 'community': '🏘️', 'neighborhood': '🏘️', 'city': '🏙️', 'town': '🏘️',
+            'village': '🏘️', 'country': '🌍', 'nation': '🌍', 'state': '🏛️', 'province': '🏛️',
+            'capital': '🏛️', 'government': '🏛️', 'law': '⚖️', 'rule': '📜', 'policy': '📜',
+            'right': '✅', 'duty': '📋', 'freedom': '🕊️', 'justice': '⚖️', 'peace': '🕊️',
+            'war': '⚔️', 'conflict': '💥', 'violence': '💥', 'crime': '🚨', 'theft': '🚨',
+            'police': '👮', 'court': '⚖️', 'judge': '⚖️', 'lawyer': '⚖️', 'prison': '🔒',
+            'election': '🗳️', 'vote': '🗳️', 'democracy': '🏛️', 'citizen': '👤', 'resident': '🏠',
+            'culture': '🎭', 'tradition': '🎭', 'custom': '🎭', 'festival': '🎉', 'celebration': '🎉',
+            'holiday': '🎉', 'birthday': '🎂', 'anniversary': '💑', 'wedding': '💒', 'funeral': '⚰️',
+            'religion': '⛪', 'faith': '🙏', 'belief': '🙏', 'god': '🙏', 'prayer': '🙏',
+            
+            // 情感
+            'emotion': '😊', 'feeling': '😊', 'mood': '😊', 'attitude': '😏', 'personality': '😊',
+            'happy': '😊', 'sad': '😢', 'angry': '😠', 'afraid': '😨', 'surprised': '😲',
+            'excited': '🎉', 'bored': '😒', 'tired': '😴', 'worried': '😟', 'nervous': '😰',
+            'calm': '😌', 'relaxed': '😌', 'stressed': '😰', 'frustrated': '😤', 'annoyed': '😤',
+            'proud': '😌', 'ashamed': '😳', 'guilty': '😔', 'jealous': '😒', 'envious': '😒',
+            'grateful': '🙏', 'thankful': '🙏', 'sorry': '😔', 'forgive': '🤝', 'apologize': '😔',
+            'love': '❤️', 'hate': '💔', 'like': '👍', 'dislike': '👎', 'prefer': '❤️',
+            'hope': '🌈', 'fear': '😨', 'doubt': '🤔', 'trust': '🤝', 'respect': '🙏',
+            'care': '❤️', 'concern': '😟', 'sympathy': '❤️', 'empathy': '❤️', 'compassion': '❤️',
+            'friendship': '🤝', 'relationship': '💑', 'marriage': '💒', 'divorce': '💔',
+            
+            // 形容詞
+            'big': '🐘', 'small': '🐁', 'large': '🐘', 'little': '🐁', 'tiny': '🐜',
+            'tall': '🏀', 'short': '🧒', 'high': '🏔️', 'low': '⬇️', 'deep': '🌊',
+            'wide': '↔️', 'narrow': '➖', 'thick': '📚', 'thin': '📄', 'fat': '🐽',
+            'long': '📏', 'short': '📐', 'heavy': '🏋️', 'light': '🎈', 'soft': '🧸',
+            'hard': '🪨', 'rough': '🧱', 'smooth': '🪞', 'sharp': '🔪', 'blunt': '🔨',
+            'fast': '🏃', 'slow': '🐢', 'quick': '⚡', 'rapid': '⚡', 'swift': '🦅',
+            'strong': '💪', 'weak': '😵', 'powerful': '💪', 'gentle': '🥰', 'rough': '🤜',
+            'new': '✨', 'old': '👴', 'young': '👶', 'modern': '🏙️', 'ancient': '🏛️',
+            'clean': '✨', 'dirty': '🤢', 'tidy': '✨', 'messy': '🤪', 'neat': '✨',
+            'beautiful': '🌸', 'ugly': '🤢', 'pretty': '🌸', 'handsome': '😏', 'cute': '🥰',
+            'good': '✅', 'bad': '❌', 'great': '👍', 'terrible': '👎', 'wonderful': '🌟',
+            'amazing': '😲', 'awful': '🤢', 'excellent': '🌟', 'poor': '👎', 'fine': '👌',
+            'nice': '😊', 'mean': '😠', 'kind': '🥰', 'cruel': '😈', 'friendly': '🤝',
+            'brave': '🦁', 'scared': '😨', 'coward': '🐔', 'bold': '💪', 'shy': '😳',
+            'clever': '🧠', 'stupid': '🤪', 'smart': '🧠', 'foolish': '🤪', 'wise': '🦉',
+            'funny': '😂', 'serious': '😐', 'silly': '🤪', 'boring': '😒', 'interesting': '🤔',
+            'easy': '✅', 'difficult': '❌', 'simple': '✅', 'complicated': '🔄', 'complex': '🔄',
+            'safe': '✅', 'dangerous': '⚠️', 'secure': '🔒', 'risky': '⚠️', 'harmful': '☠️',
+            'true': '✅', 'false': '❌', 'real': '✅', 'fake': '🎭', 'genuine': '✅',
+            'right': '✅', 'wrong': '❌', 'correct': '✅', 'incorrect': '❌', 'accurate': '🎯',
+            'same': '👯', 'different': '🔀', 'similar': '👯', 'equal': '⚖️', 'identical': '👯',
+            'special': '⭐', 'ordinary': '⚪', 'unique': '🌟', 'common': '⚪', 'rare': '💎',
+            'popular': '👥', 'famous': '⭐', 'unknown': '❓', 'strange': '🤔', 'weird': '🤔',
+            'rich': '💰', 'poor': '🪙', 'wealthy': '💰', 'cheap': '💵', 'expensive': '💎',
+            'loud': '🔊', 'quiet': '🤫', 'noisy': '📢', 'silent': '🤐', 'calm': '😌',
+            'bright': '☀️', 'dark': '🌑', 'light': '💡', 'dim': '🌙', 'colorful': '🌈',
+            'hot': '🔥', 'cold': '❄️', 'warm': '☀️', 'cool': '🌬️', 'freezing': '🥶',
+            'wet': '💧', 'dry': '☀️', 'damp': '💧', 'moist': '💧', 'humid': '💧',
+            'full': '😋', 'empty': '⬜', 'hungry': '😋', 'thirsty': '🥤', 'starving': '😋',
+            'alive': '✨', 'dead': '💀', 'living': '✨', 'healthy': '💪', 'sick': '🤒',
+            'free': '🆓', 'busy': '📅', 'available': '✅', 'occupied': '🔴', 'ready': '✅',
+            
+            // 介系詞/方位
+            'position': '📍', 'location': '📍', 'place': '📍', 'direction': '➡️', 'side': '↔️',
+            'top': '⬆️', 'bottom': '⬇️', 'left': '⬅️', 'right': '➡️', 'center': '🎯',
+            'middle': '🎯', 'front': '⬆️', 'back': '⬇️', 'inside': '🏠', 'outside': '🌳',
+            'up': '⬆️', 'down': '⬇️', 'over': '⬆️', 'under': '⬇️', 'above': '⬆️',
+            'below': '⬇️', 'between': '↔️', 'among': '👥', 'through': '➡️', 'across': '↔️',
+            'around': '🔄', 'along': '➡️', 'toward': '➡️', 'away': '⬅️', 'near': '📍',
+            'far': '🌍', 'next to': '↔️', 'beside': '↔️', 'behind': '⬇️', 'in front of': '⬆️',
+            'north': '⬆️', 'south': '⬇️', 'east': '➡️', 'west': '⬅️',
+            
+            // 連接詞/副詞
+            'and': '&', 'or': '|', 'but': '⚡', 'so': '➡️', 'because': '💡',
+            'if': '❓', 'when': '⏰', 'while': '⏰', 'after': '⏭️', 'before': '⏮️',
+            'then': '➡️', 'now': '⏰', 'later': '⏭️', 'soon': '⏭️', 'already': '✅',
+            'still': '🔄', 'yet': '⏳', 'again': '🔄', 'once': '1️⃣', 'twice': '2️⃣',
+            'always': '🔄', 'usually': '📊', 'often': '📊', 'sometimes': '📊', 'rarely': '📊',
+            'never': '❌', 'ever': '❓', 'just': '✅', 'only': '1️⃣', 'also': '✅',
+            'too': '✅', 'very': '⚡', 'really': '⚡', 'quite': '📊', 'almost': '📊',
+            'maybe': '❓', 'perhaps': '❓', 'probably': '📊', 'certainly': '✅', 'definitely': '✅',
+            
+            // 其他常用
+            'thing': '📦', 'object': '📦', 'item': '📦', 'stuff': '📦', 'material': '🧱',
+            'idea': '💡', 'thought': '💭', 'concept': '💡', 'theory': '📚', 'fact': '✅',
+            'reason': '💡', 'cause': '⚡', 'result': '✅', 'effect': '⚡', 'purpose': '🎯',
+            'example': '📝', 'sample': '📦', 'case': '💼', 'situation': '📋', 'problem': '❓',
+            'solution': '✅', 'answer': '✅', 'question': '❓', 'reply': '💬', 'response': '💬',
+            'help': '🆘', 'support': '🤝', 'advice': '💡', 'suggestion': '💡', 'tip': '💡',
+            'information': 'ℹ️', 'data': '📊', 'knowledge': '📚', 'experience': '👴', 'skill': '🎓',
+            'chance': '🎲', 'opportunity': '🚪', 'luck': '🍀', 'fortune': '💰', 'destiny': '🔮',
+            'time': '⏰', 'moment': '⏱️', 'period': '📅', 'era': '🏛️', 'age': '👴',
+            'life': '❤️', 'death': '💀', 'birth': '👶', 'growth': '📈', 'change': '🔄',
+            'success': '🏆', 'failure': '❌', 'achievement': '🏆', 'progress': '📈', 'improvement': '📈',
+            'fun': '🎉', 'joy': '😊', 'pleasure': '😊', 'entertainment': '🎬', 'hobby': '🎨',
+            'habit': '🔄', 'routine': '📋', 'schedule': '📅', 'plan': '📋', 'goal': '🎯',
+            'dream': '💭', 'wish': '💫', 'hope': '🌈', 'desire': '❤️', 'ambition': '🎯',
+            'secret': '🤫', 'mystery': '🔍', 'puzzle': '🧩', 'riddle': '❓', 'question': '❓',
+            'truth': '✅', 'lie': '🎭', 'fact': '✅', 'story': '📖', 'tale': '📖',
+            'news': '📰', 'report': '📰', 'article': '📰', 'post': '📱', 'blog': '💻',
+            'message': '💬', 'letter': '✉️', 'email': '📧', 'text': '💬', 'chat': '💬',
+            'gift': '🎁', 'present': '🎁', 'prize': '🏆', 'award': '🏆', 'reward': '💰',
+            'surprise': '😲', 'shock': '⚡', 'wonder': '🤔', 'miracle': '✨', 'magic': '✨',
+        };
+        
+        // 獲取單字對應的 Emoji
+        function getWordEmoji(word) {
+            const wordLower = word.toLowerCase().trim();
+            
+            // 直接匹配
+            if (wordEmojis[wordLower]) {
+                return wordEmojis[wordLower];
+            }
+            
+            // 處理複數
+            if (wordLower.endsWith('s') && wordEmojis[wordLower.slice(0, -1)]) {
+                return wordEmojis[wordLower.slice(0, -1)];
+            }
+            
+            // 處理片語（取第一個單字）
+            const firstWord = wordLower.split(' ')[0];
+            if (wordEmojis[firstWord]) {
+                return wordEmojis[firstWord];
+            }
+            
+            // 根據詞性給默認 Emoji
+            if (wordLower.match(/^(v\.|verb)/)) return '🏃';
+            if (wordLower.match(/^(adj\.|adjective)/)) return '🎨';
+            if (wordLower.match(/^(adv\.|adverb)/)) return '⚡';
+            if (wordLower.match(/^(prep\.|preposition)/)) return '📍';
+            if (wordLower.match(/^(conj\.|conjunction)/)) return '🔗';
+            if (wordLower.match(/^(pron\.|pronoun)/)) return '👤';
+            if (wordLower.match(/^(n\.|noun)/)) return '📦';
+            
+            // 默認
+            return '📝';
+        }
+
+        // Vocabulary data (完整 540 個單字)
+        const vocabulary = [
+            {num:1, word:"a.m.", pos:"adv.", chinese:"上午", emoji:"🕐"},
+            {num:2, word:"across", pos:"prep.", chinese:"横过；越过；穿过", emoji:"↔️"},
+            {num:3, word:"act", pos:"v.", chinese:"扮演", emoji:"🎭"},
+            {num:4, word:"actor", pos:"n.", chinese:"男演员", emoji:"🎭"},
+            {num:5, word:"actually", pos:"adv.", chinese:"实际上；事实上", emoji:"💡"},
+            {num:6, word:"adventure", pos:"n.", chinese:"冒险", emoji:"🗺️"},
+            {num:7, word:"after", pos:"adv./conj.", chinese:"之后；在……以后", emoji:"⏭️"},
+            {num:8, word:"ago", pos:"adv.", chinese:"以前", emoji:"⏮️"},
+            {num:9, word:"agree", pos:"v.", chinese:"同意；赞成", emoji:"🤝"},
+            {num:10, word:"air", pos:"n.", chinese:"空气", emoji:"💨"},
+            {num:11, word:"airport", pos:"n.", chinese:"机场", emoji:"✈️"},
+            {num:12, word:"alone", pos:"adj.", chinese:"单独的；独自的", emoji:"👤"},
+            {num:13, word:"already", pos:"adv.", chinese:"已经", emoji:"✅"},
+            {num:14, word:"also", pos:"adv.", chinese:"也", emoji:"✅"},
+            {num:15, word:"amazing", pos:"adj./excl.", chinese:"令人吃惊的；惊人的", emoji:"😲"},
+            {num:16, word:"ambulance", pos:"n.", chinese:"救护车", emoji:"🚑"},
+            {num:17, word:"anyone", pos:"pron.", chinese:"任何人", emoji:"👤"},
+            {num:18, word:"anything", pos:"pron.", chinese:"任何东西；任何事", emoji:"📦"},
+            {num:19, word:"anywhere", pos:"adv.", chinese:"在任何地方；到任何地方", emoji:"🌍"},
+            {num:20, word:"appear", pos:"v.", chinese:"出现", emoji:"✨"},
+            {num:21, word:"April", pos:"n.", chinese:"四月", emoji:"🌸"},
+            {num:22, word:"arrive", pos:"v.", chinese:"到达", emoji:"🛬"},
+            {num:23, word:"art", pos:"n.", chinese:"艺术；美术", emoji:"🎨"},
+            {num:24, word:"artist", pos:"n.", chinese:"艺术家；画家；艺人", emoji:"🎨"},
+            {num:25, word:"as", pos:"adv.", chinese:"……一样；如同", emoji:"👯"},
+            {num:26, word:"as ... as", pos:"adv.", chinese:"和……一样", emoji:"👯"},
+            {num:27, word:"astronaut", pos:"n.", chinese:"太空人；宇航员", emoji:"🚀"},
+            {num:28, word:"at the moment", pos:"adv.", chinese:"现在；此刻", emoji:"⏰"},
+            {num:29, word:"August", pos:"n.", chinese:"八月", emoji:"☀️"},
+            {num:30, word:"autumn", pos:"n.", chinese:"秋天", emoji:"🍂"},
+            {num:31, word:"away", pos:"adv.", chinese:"离开；走开", emoji:"👋"},
+            {num:32, word:"backpack", pos:"n.", chinese:"背包", emoji:"🎒"},
+            {num:33, word:"bandage", pos:"n.", chinese:"绷带", emoji:"🩹"},
+            {num:34, word:"bank", pos:"n.", chinese:"银行", emoji:"🏦"},
+            {num:35, word:"beetle", pos:"n.", chinese:"甲虫", emoji:"🪲"},
+            {num:36, word:"before", pos:"adv./conj.", chinese:"在……以前", emoji:"⏮️"},
+            {num:37, word:"begin", pos:"v.", chinese:"开始", emoji:"▶️"},
+            {num:38, word:"believe", pos:"v.", chinese:"相信；信任", emoji:"🤝"},
+            {num:39, word:"belt", pos:"n.", chinese:"皮带", emoji:"⬛"},
+            {num:40, word:"Betty", pos:"n.", chinese:"贝蒂（人名）", emoji:"👩"},
+            {num:41, word:"bicycle", pos:"n.", chinese:"脚踏车；自行车", emoji:"🚲"},
+            {num:42, word:"bin", pos:"n.", chinese:"垃圾箱；桶", emoji:"🗑️"},
+            {num:43, word:"biscuit", pos:"n.", chinese:"饼干", emoji:"🍪"},
+            {num:44, word:"bit", pos:"n.", chinese:"一点；少量", emoji:"🔹"},
+            {num:45, word:"bored", pos:"adj.", chinese:"厌烦的；无聊的", emoji:"😒"},
+            {num:46, word:"borrow", pos:"v.", chinese:"借入", emoji:"📚"},
+            {num:47, word:"bracelet", pos:"n.", chinese:"手镯", emoji:"📿"},
+            {num:48, word:"break", pos:"v.", chinese:"打破；弄坏；损坏", emoji:"💔"},
+            {num:49, word:"bridge", pos:"n.", chinese:"桥", emoji:"🌉"},
+            {num:50, word:"broken", pos:"adj.", chinese:"损坏的；坏的", emoji:"💔"},
+            {num:51, word:"brush", pos:"n./v.", chinese:"刷子；刷；拂", emoji:"🪮"},
+            {num:52, word:"burn", pos:"v.", chinese:"烧；烧伤；烫伤", emoji:"🔥"},
+            {num:53, word:"business", pos:"n.", chinese:"生意；商业", emoji:"💼"},
+            {num:54, word:"businessman", pos:"n.", chinese:"商人；商人（女）", emoji:"💼"},
+            {num:55, word:"butter", pos:"n.", chinese:"奶油；黄油", emoji:"🧈"},
+            {num:56, word:"butterfly", pos:"n.", chinese:"蝴蝶", emoji:"🦋"},
+            {num:57, word:"by myself", pos:"adv.", chinese:"靠我自己；独自", emoji:"👤"},
+            {num:58, word:"by yourself", pos:"adv.", chinese:"靠你自己；独自", emoji:"👤"},
+            {num:59, word:"calendar", pos:"n.", chinese:"日历；挂历", emoji:"📅"},
+            {num:60, word:"camel", pos:"n.", chinese:"骆驼", emoji:"🐪"},
+            {num:61, word:"camp", pos:"v.", chinese:"露营", emoji:"⛺"},
+            {num:62, word:"card", pos:"n.", chinese:"纸牌；卡片；贺卡", emoji:"🃏"},
+            {num:63, word:"cartoon", pos:"n.", chinese:"卡通；动画片", emoji:"🎬"},
+            {num:64, word:"castle", pos:"n.", chinese:"城堡", emoji:"🏰"},
+            {num:65, word:"cave", pos:"n.", chinese:"洞穴", emoji:"🕳️"},
+            {num:66, word:"century", pos:"n.", chinese:"世纪", emoji:"📚"},
+            {num:67, word:"cereal", pos:"n.", chinese:"麦片；谷类食品", emoji:"🥣"},
+            {num:68, word:"channel", pos:"n.", chinese:"频道", emoji:"📺"},
+            {num:69, word:"chat", pos:"v.", chinese:"闲谈；聊天", emoji:"💬"},
+            {num:70, word:"cheap", pos:"adj.", chinese:"便宜的；廉价的", emoji:"💵"},
+            {num:71, word:"chemist", pos:"n.", chinese:"化学家；药剂师；药店", emoji:"💊"},
+            {num:72, word:"chess", pos:"n.", chinese:"西洋棋；国际象棋", emoji:"♟️"},
+            {num:73, word:"chopsticks", pos:"n.", chinese:"筷子", emoji:"🥢"},
+            {num:74, word:"club", pos:"n.", chinese:"俱乐部", emoji:"🎭"},
+            {num:75, word:"collect", pos:"v.", chinese:"收集；搜集", emoji:"📦"},
+            {num:76, word:"colleague", pos:"n.", chinese:"同事", emoji:"👥"},
+            {num:77, word:"comb", pos:"n./v.", chinese:"梳子；用梳子梳（头发）", emoji:"💇"},
+            {num:78, word:"competition", pos:"n.", chinese:"比赛；竞赛", emoji:"🏆"},
+            {num:79, word:"concert", pos:"n.", chinese:"音乐会；演奏会", emoji:"🎤"},
+            {num:80, word:"conversation", pos:"n.", chinese:"会话；谈话", emoji:"💬"},
+            {num:81, word:"cooker", pos:"n.", chinese:"炊具；炉灶", emoji:"🍳"},
+            {num:82, word:"cookie", pos:"n.", chinese:"饼干", emoji:"🍪"},
+            {num:83, word:"corner", pos:"n.", chinese:"街角；角落", emoji:"📐"},
+            {num:84, word:"costume", pos:"n.", chinese:"服装；戏服", emoji:"🎭"},
+            {num:85, word:"could", pos:"v.", chinese:"可能；可以（情态动词）", emoji:"❓"},
+            {num:86, word:"creature", pos:"n.", chinese:"生物；动物", emoji:"🐾"},
+            {num:87, word:"crown", pos:"n.", chinese:"王冠", emoji:"👑"},
+            {num:88, word:"cushion", pos:"n.", chinese:"垫子；软垫", emoji:"🛋️"},
+            {num:89, word:"cut", pos:"v.", chinese:"切；割；剪", emoji:"✂️"},
+            {num:90, word:"cycle", pos:"v.", chinese:"骑自行车；循环", emoji:"🚲"},
+            {num:91, word:"dark", pos:"adj.", chinese:"黑暗的；暗的", emoji:"🌑"},
+            {num:92, word:"date", pos:"n.", chinese:"日期", emoji:"📅"},
+            {num:93, word:"David", pos:"n.", chinese:"大卫（人名）", emoji:"👨"},
+            {num:94, word:"dear", pos:"adj.", chinese:"亲爱的（用于信件开头）", emoji:"❤️"},
+            {num:95, word:"December", pos:"n.", chinese:"十二月", emoji:"❄️"},
+            {num:96, word:"decide", pos:"v.", chinese:"决定", emoji:"✅"}
+        ];
+
+        // 補充更多單字（B-F 開頭）
+        const moreVocab = [
+            // B
+            {num:97, word:"balance", pos:"n./v.", chinese:"平衡", emoji:"⚖️"},
+            {num:98, word:"ball", pos:"n.", chinese:"球", emoji:"⚽"},
+            {num:99, word:"balloon", pos:"n.", chinese:"气球", emoji:"🎈"},
+            {num:100, word:"banana", pos:"n.", chinese:"香蕉", emoji:"🍌"},
+            {num:101, word:"bank", pos:"n.", chinese:"银行", emoji:"🏦"},
+            {num:102, word:"bark", pos:"v.", chinese:"吠叫", emoji:"🐕"},
+            {num:103, word:"basket", pos:"n.", chinese:"篮子", emoji:"🧺"},
+            {num:104, word:"basketball", pos:"n.", chinese:"篮球", emoji:"🏀"},
+            {num:105, word:"bath", pos:"n.", chinese:"洗澡", emoji:"🛁"},
+            {num:106, word:"bathroom", pos:"n.", chinese:"浴室", emoji:"🚿"},
+            {num:107, word:"beach", pos:"n.", chinese:"海滩", emoji:"🏖️"},
+            {num:108, word:"bear", pos:"n.", chinese:"熊", emoji:"🐻"},
+            {num:109, word:"beard", pos:"n.", chinese:"胡须", emoji:"🧔"},
+            {num:110, word:"beautiful", pos:"adj.", chinese:"美丽的", emoji:"🌸"},
+            {num:111, word:"bed", pos:"n.", chinese:"床", emoji:"🛏️"},
+            {num:112, word:"bedroom", pos:"n.", chinese:"卧室", emoji:"🛏️"},
+            {num:113, word:"bee", pos:"n.", chinese:"蜜蜂", emoji:"🐝"},
+            {num:114, word:"beef", pos:"n.", chinese:"牛肉", emoji:"🥩"},
+            {num:115, word:"beer", pos:"n.", chinese:"啤酒", emoji:"🍺"},
+            {num:116, word:"bell", pos:"n.", chinese:"铃；钟", emoji:"🔔"},
+            {num:117, word:"belong", pos:"v.", chinese:"属于", emoji:"🏠"},
+            {num:118, word:"below", pos:"prep.", chinese:"在……下面", emoji:"⬇️"},
+            {num:119, word:"belt", pos:"n.", chinese:"皮带", emoji:"⬛"},
+            {num:120, word:"bench", pos:"n.", chinese:"长椅", emoji:"🪑"},
+            {num:121, word:"beside", pos:"prep.", chinese:"在……旁边", emoji:"↔️"},
+            {num:122, word:"best", pos:"adj.", chinese:"最好的", emoji:"🏆"},
+            {num:123, word:"better", pos:"adj.", chinese:"更好的", emoji:"📈"},
+            {num:124, word:"between", pos:"prep.", chinese:"在……之间", emoji:"↔️"},
+            {num:125, word:"bicycle", pos:"n.", chinese:"自行车", emoji:"🚲"},
+            {num:126, word:"big", pos:"adj.", chinese:"大的", emoji:"🐘"},
+            {num:127, word:"bike", pos:"n.", chinese:"自行车", emoji:"🚲"},
+            {num:128, word:"bird", pos:"n.", chinese:"鸟", emoji:"🐦"},
+            {num:129, word:"birthday", pos:"n.", chinese:"生日", emoji:"🎂"},
+            {num:130, word:"biscuit", pos:"n.", chinese:"饼干", emoji:"🍪"},
+            {num:131, word:"bite", pos:"v.", chinese:"咬", emoji:"😬"},
+            {num:132, word:"black", pos:"adj.", chinese:"黑色的", emoji:"⚫"},
+            {num:133, word:"blanket", pos:"n.", chinese:"毯子", emoji:"🛌"},
+            {num:134, word:"blouse", pos:"n.", chinese:"女衬衫", emoji:"👚"},
+            {num:135, word:"blow", pos:"v.", chinese:"吹", emoji:"💨"},
+            {num:136, word:"blue", pos:"adj.", chinese:"蓝色的", emoji:"🔵"},
+            {num:137, word:"boat", pos:"n.", chinese:"船", emoji:"⛵"},
+            {num:138, word:"body", pos:"n.", chinese:"身体", emoji:"🧍"},
+            {num:139, word:"boil", pos:"v.", chinese:"煮沸", emoji:"🥘"},
+            {num:140, word:"book", pos:"n.", chinese:"书", emoji:"📖"},
+            {num:141, word:"bookshelf", pos:"n.", chinese:"书架", emoji:"📚"},
+            {num:142, word:"boot", pos:"n.", chinese:"靴子", emoji:"👢"},
+            {num:143, word:"boring", pos:"adj.", chinese:"无聊的", emoji:"😒"},
+            {num:144, word:"born", pos:"v.", chinese:"出生", emoji:"👶"},
+            {num:145, word:"borrow", pos:"v.", chinese:"借", emoji:"📚"},
+            {num:146, word:"both", pos:"pron.", chinese:"两者都", emoji:"👯"},
+            {num:147, word:"bottle", pos:"n.", chinese:"瓶子", emoji:"🍾"},
+            {num:148, word:"bottom", pos:"n.", chinese:"底部", emoji:"⬇️"},
+            {num:149, word:"bowl", pos:"n.", chinese:"碗", emoji:"🥣"},
+            {num:150, word:"box", pos:"n.", chinese:"盒子", emoji:"📦"},
+            {num:151, word:"boy", pos:"n.", chinese:"男孩", emoji:"👦"},
+            {num:152, word:"bread", pos:"n.", chinese:"面包", emoji:"🍞"},
+            {num:153, word:"breakfast", pos:"n.", chinese:"早餐", emoji:"🍳"},
+            {num:154, word:"bridge", pos:"n.", chinese:"桥", emoji:"🌉"},
+            {num:155, word:"bright", pos:"adj.", chinese:"明亮的", emoji:"☀️"},
+            {num:156, word:"bring", pos:"v.", chinese:"带来", emoji:"📦"},
+            {num:157, word:"brother", pos:"n.", chinese:"兄弟", emoji:"👦"},
+            {num:158, word:"brown", pos:"adj.", chinese:"棕色的", emoji:"🟤"},
+            {num:159, word:"brush", pos:"n./v.", chinese:"刷子；刷", emoji:"🪮"},
+            {num:160, word:"build", pos:"v.", chinese:"建造", emoji:"🏗️"},
+            {num:161, word:"building", pos:"n.", chinese:"建筑物", emoji:"🏢"},
+            {num:162, word:"bus", pos:"n.", chinese:"公共汽车", emoji:"🚌"},
+            {num:163, word:"bus stop", pos:"n.", chinese:"公交车站", emoji:"🚏"},
+            {num:164, word:"business", pos:"n.", chinese:"商业；生意", emoji:"💼"},
+            {num:165, word:"busy", pos:"adj.", chinese:"忙碌的", emoji:"📅"},
+            {num:166, word:"but", pos:"conj.", chinese:"但是", emoji:"⚡"},
+            {num:167, word:"butter", pos:"n.", chinese:"黄油", emoji:"🧈"},
+            {num:168, word:"butterfly", pos:"n.", chinese:"蝴蝶", emoji:"🦋"},
+            {num:169, word:"button", pos:"n.", chinese:"按钮", emoji:"🔘"},
+            {num:170, word:"buy", pos:"v.", chinese:"买", emoji:"🛒"},
+            
+            // C
+            {num:171, word:"cake", pos:"n.", chinese:"蛋糕", emoji:"🎂"},
+            {num:172, word:"call", pos:"v.", chinese:"称呼；打电话", emoji:"📞"},
+            {num:173, word:"calm", pos:"adj.", chinese:"平静的", emoji:"😌"},
+            {num:174, word:"camera", pos:"n.", chinese:"照相机", emoji:"📷"},
+            {num:175, word:"camp", pos:"n./v.", chinese:"露营", emoji:"⛺"},
+            {num:176, word:"can", pos:"v.", chinese:"能；能够", emoji:"✅"},
+            {num:177, word:"cancel", pos:"v.", chinese:"取消", emoji:"❌"},
+            {num:178, word:"candle", pos:"n.", chinese:"蜡烛", emoji:"🕯️"},
+            {num:179, word:"candy", pos:"n.", chinese:"糖果", emoji:"🍬"},
+            {num:180, word:"cap", pos:"n.", chinese:"帽子", emoji:"🧢"},
+            {num:181, word:"capital", pos:"n.", chinese:"首都", emoji:"🏛️"},
+            {num:182, word:"car", pos:"n.", chinese:"汽车", emoji:"🚗"},
+            {num:183, word:"card", pos:"n.", chinese:"卡片", emoji:"🃏"},
+            {num:184, word:"careful", pos:"adj.", chinese:"小心的", emoji:"⚠️"},
+            {num:185, word:"carry", pos:"v.", chinese:"携带", emoji:"📦"},
+            {num:186, word:"cat", pos:"n.", chinese:"猫", emoji:"🐱"},
+            {num:187, word:"catch", pos:"v.", chinese:"抓住", emoji:"🧤"},
+            {num:188, word:"cause", pos:"n./v.", chinese:"原因；导致", emoji:"⚡"},
+            {num:189, word:"ceiling", pos:"n.", chinese:"天花板", emoji:"🏠"},
+            {num:190, word:"celebrate", pos:"v.", chinese:"庆祝", emoji:"🎉"},
+            {num:191, word:"centimetre", pos:"n.", chinese:"厘米", emoji:"📏"},
+            {num:192, word:"centre", pos:"n.", chinese:"中心", emoji:"🎯"},
+            {num:193, word:"century", pos:"n.", chinese:"世纪", emoji:"📚"},
+            {num:194, word:"certainly", pos:"adv.", chinese:"当然", emoji:"✅"},
+            {num:195, word:"chair", pos:"n.", chinese:"椅子", emoji:"🪑"},
+            {num:196, word:"chalk", pos:"n.", chinese:"粉笔", emoji:"📝"},
+            {num:197, word:"chance", pos:"n.", chinese:"机会", emoji:"🎲"},
+            {num:198, word:"change", pos:"v.", chinese:"改变", emoji:"🔄"},
+            {num:199, word:"channel", pos:"n.", chinese:"频道", emoji:"📺"},
+            {num:200, word:"cheap", pos:"adj.", chinese:"便宜的", emoji:"💵"},
+            {num:201, word:"cheese", pos:"n.", chinese:"奶酪", emoji:"🧀"},
+            {num:202, word:"chef", pos:"n.", chinese:"厨师", emoji:"👨‍🍳"},
+            {num:203, word:"chemistry", pos:"n.", chinese:"化学", emoji:"🧪"},
+            {num:204, word:"cherry", pos:"n.", chinese:"樱桃", emoji:"🍒"},
+            {num:205, word:"chess", pos:"n.", chinese:"国际象棋", emoji:"♟️"},
+            {num:206, word:"chicken", pos:"n.", chinese:"鸡；鸡肉", emoji:"🍗"},
+            {num:207, word:"child", pos:"n.", chinese:"孩子", emoji:"👶"},
+            {num:208, word:"chimney", pos:"n.", chinese:"烟囱", emoji:"🏠"},
+            {num:209, word:"chin", pos:"n.", chinese:"下巴", emoji:"🗣️"},
+            {num:210, word:"chocolate", pos:"n.", chinese:"巧克力", emoji:"🍫"},
+            {num:211, word:"choice", pos:"n.", chinese:"选择", emoji:"✅"},
+            {num:212, word:"choose", pos:"v.", chinese:"选择", emoji:"✅"},
+            {num:213, word:"church", pos:"n.", chinese:"教堂", emoji:"⛪"},
+            {num:214, word:"circle", pos:"n.", chinese:"圆圈", emoji:"⭕"},
+            {num:215, word:"circus", pos:"n.", chinese:"马戏团", emoji:"🎪"},
+            {num:216, word:"city", pos:"n.", chinese:"城市", emoji:"🏙️"},
+            {num:217, word:"class", pos:"n.", chinese:"班级；课", emoji:"📚"},
+            {num:218, word:"classmate", pos:"n.", chinese:"同学", emoji:"👦"},
+            {num:219, word:"classroom", pos:"n.", chinese:"教室", emoji:"🏫"},
+            {num:220, word:"clean", pos:"adj./v.", chinese:"干净的；打扫", emoji:"✨"},
+            {num:221, word:"clear", pos:"adj.", chinese:"清楚的", emoji:"✅"},
+            {num:222, word:"clever", pos:"adj.", chinese:"聪明的", emoji:"🧠"},
+            {num:223, word:"click", pos:"v.", chinese:"点击", emoji:"🖱️"},
+            {num:224, word:"climb", pos:"v.", chinese:"爬", emoji:"🧗"},
+            {num:225, word:"clock", pos:"n.", chinese:"时钟", emoji:"🕐"},
+            {num:226, word:"close", pos:"v./adj.", chinese:"关闭；近的", emoji:"🔒"},
+            {num:227, word:"clothes", pos:"n.", chinese:"衣服", emoji:"👕"},
+            {num:228, word:"cloud", pos:"n.", chinese:"云", emoji:"☁️"},
+            {num:229, word:"cloudy", pos:"adj.", chinese:"多云的", emoji:"☁️"},
+            {num:230, word:"club", pos:"n.", chinese:"俱乐部", emoji:"🎭"},
+            {num:231, word:"coat", pos:"n.", chinese:"外套", emoji:"🧥"},
+            {num:232, word:"coffee", pos:"n.", chinese:"咖啡", emoji:"☕"},
+            {num:233, word:"coin", pos:"n.", chinese:"硬币", emoji:"🪙"},
+            {num:234, word:"cold", pos:"adj.", chinese:"冷的", emoji:"❄️"},
+            {num:235, word:"collect", pos:"v.", chinese:"收集", emoji:"📦"},
+            {num:236, word:"college", pos:"n.", chinese:"学院", emoji:"🎓"},
+            {num:237, word:"colour", pos:"n.", chinese:"颜色", emoji:"🎨"},
+            {num:238, word:"comb", pos:"n.", chinese:"梳子", emoji:"💇"},
+            {num:239, word:"come", pos:"v.", chinese:"来", emoji:"➡️"},
+            {num:240, word:"comedy", pos:"n.", chinese:"喜剧", emoji:"😂"},
+            {num:241, word:"comfortable", pos:"adj.", chinese:"舒适的", emoji:"🛋️"},
+            {num:242, word:"comic", pos:"n.", chinese:"漫画", emoji:"📚"},
+            {num:243, word:"common", pos:"adj.", chinese:"常见的", emoji:"⚪"},
+            {num:244, word:"company", pos:"n.", chinese:"公司", emoji:"🏢"},
+            {num:245, word:"competition", pos:"n.", chinese:"比赛", emoji:"🏆"},
+            {num:246, word:"complete", pos:"v.", chinese:"完成", emoji:"✅"},
+            {num:247, word:"computer", pos:"n.", chinese:"电脑", emoji:"💻"},
+            {num:248, word:"concert", pos:"n.", chinese:"音乐会", emoji:"🎤"},
+            {num:249, word:"cook", pos:"v.", chinese:"烹饪", emoji:"👨‍🍳"},
+            {num:250, word:"cooker", pos:"n.", chinese:"炊具", emoji:"🍳"},
+            {num:251, word:"cookie", pos:"n.", chinese:"饼干", emoji:"🍪"},
+            {num:252, word:"cool", pos:"adj.", chinese:"凉爽的", emoji:"🌬️"},
+            {num:253, word:"copy", pos:"v.", chinese:"复制", emoji:"📄"},
+            {num:254, word:"corner", pos:"n.", chinese:"角落", emoji:"📐"},
+            {num:255, word:"correct", pos:"adj.", chinese:"正确的", emoji:"✅"},
+            {num:256, word:"cost", pos:"n./v.", chinese:"费用；花费", emoji:"💰"},
+            {num:257, word:"cotton", pos:"n.", chinese:"棉花", emoji:"🧵"},
+            {num:258, word:"cough", pos:"v.", chinese:"咳嗽", emoji:"😷"},
+            {num:259, word:"could", pos:"v.", chinese:"能；可以", emoji:"❓"},
+            {num:260, word:"count", pos:"v.", chinese:"数数", emoji:"🔢"},
+            {num:261, word:"country", pos:"n.", chinese:"国家；乡村", emoji:"🌍"},
+            {num:262, word:"countryside", pos:"n.", chinese:"乡村", emoji:"🌾"},
+            {num:263, word:"course", pos:"n.", chinese:"课程", emoji:"📚"},
+            {num:264, word:"cousin", pos:"n.", chinese:"堂兄弟姊妹", emoji:"👦"},
+            {num:265, word:"cover", pos:"v.", chinese:"覆盖", emoji:"📖"},
+            {num:266, word:"cow", pos:"n.", chinese:"牛", emoji:"🐄"},
+            {num:267, word:"crayon", pos:"n.", chinese:"蜡笔", emoji:"🎨"},
+            {num:268, word:"crazy", pos:"adj.", chinese:"疯狂的", emoji:"🤪"},
+            {num:269, word:"cream", pos:"n.", chinese:"奶油", emoji:"🍰"},
+            {num:270, word:"create", pos:"v.", chinese:"创造", emoji:"🎨"},
+            {num:271, word:"cross", pos:"v.", chinese:"穿过", emoji:"➡️"},
+            {num:272, word:"crowded", pos:"adj.", chinese:"拥挤的", emoji:"👥"},
+            {num:273, word:"cup", pos:"n.", chinese:"杯子", emoji:"☕"},
+            {num:274, word:"cupboard", pos:"n.", chinese:"橱柜", emoji:"🗄️"},
+            {num:275, word:"curtain", pos:"n.", chinese:"窗帘", emoji:"🪟"},
+            {num:276, word:"cute", pos:"adj.", chinese:"可爱的", emoji:"🥰"},
+            
+            // D
+            {num:277, word:"dad", pos:"n.", chinese:"爸爸", emoji:"👨"},
+            {num:278, word:"dance", pos:"v.", chinese:"跳舞", emoji:"💃"},
+            {num:279, word:"danger", pos:"n.", chinese:"危险", emoji:"⚠️"},
+            {num:280, word:"dangerous", pos:"adj.", chinese:"危险的", emoji:"⚠️"},
+            {num:281, word:"dark", pos:"adj.", chinese:"黑暗的", emoji:"🌑"},
+            {num:282, word:"daughter", pos:"n.", chinese:"女儿", emoji:"👧"},
+            {num:283, word:"day", pos:"n.", chinese:"天；日子", emoji:"📅"},
+            {num:284, word:"dead", pos:"adj.", chinese:"死的", emoji:"💀"},
+            {num:285, word:"dear", pos:"adj.", chinese:"亲爱的", emoji:"❤️"},
+            {num:286, word:"December", pos:"n.", chinese:"十二月", emoji:"❄️"},
+            {num:287, word:"decide", pos:"v.", chinese:"决定", emoji:"✅"},
+            {num:288, word:"deep", pos:"adj.", chinese:"深的", emoji:"🌊"},
+            {num:289, word:"delicious", pos:"adj.", chinese:"美味的", emoji:"😋"},
+            {num:290, word:"dentist", pos:"n.", chinese:"牙医", emoji:"🦷"},
+            {num:291, word:"department", pos:"n.", chinese:"部门", emoji:"🏢"},
+            {num:292, word:"describe", pos:"v.", chinese:"描述", emoji:"📝"},
+            {num:293, word:"desk", pos:"n.", chinese:"书桌", emoji:"🖥️"},
+            {num:294, word:"detective", pos:"n.", chinese:"侦探", emoji:"🔍"},
+            {num:295, word:"dictionary", pos:"n.", chinese:"字典", emoji:"📖"},
+            {num:296, word:"die", pos:"v.", chinese:"死", emoji:"💀"},
+            {num:297, word:"different", pos:"adj.", chinese:"不同的", emoji:"🔀"},
+            {num:298, word:"difficult", pos:"adj.", chinese:"困难的", emoji:"❌"},
+            {num:299, word:"dinner", pos:"n.", chinese:"晚餐", emoji:"🍽️"},
+            {num:300, word:"dinosaur", pos:"n.", chinese:"恐龙", emoji:"🦕"},
+            {num:301, word:"diplomat", pos:"n.", chinese:"外交官", emoji:"🌍"},
+            {num:302, word:"dirty", pos:"adj.", chinese:"脏的", emoji:"🤢"},
+            {num:303, word:"dish", pos:"n.", chinese:"盘子；菜肴", emoji:"🍽️"},
+            {num:304, word:"diver", pos:"n.", chinese:"潜水员", emoji:"🤿"},
+            {num:305, word:"do", pos:"v.", chinese:"做", emoji:"✅"},
+            {num:306, word:"doctor", pos:"n.", chinese:"医生", emoji:"👨‍⚕️"},
+            {num:307, word:"documentary", pos:"n.", chinese:"纪录片", emoji:"🎬"},
+            {num:308, word:"does", pos:"v.", chinese:"做", emoji:"✅"},
+            {num:309, word:"dog", pos:"n.", chinese:"狗", emoji:"🐕"},
+            {num:310, word:"dollar", pos:"n.", chinese:"美元", emoji:"💵"},
+            {num:311, word:"dolphin", pos:"n.", chinese:"海豚", emoji:"🐬"},
+            {num:312, word:"door", pos:"n.", chinese:"门", emoji:"🚪"},
+            {num:313, word:"double", pos:"adj.", chinese:"双倍的", emoji:"2️⃣"},
+            {num:314, word:"down", pos:"adv.", chinese:"向下", emoji:"⬇️"},
+            {num:315, word:"dragon", pos:"n.", chinese:"龙", emoji:"🐉"},
+            {num:316, word:"draw", pos:"v.", chinese:"画", emoji:"🎨"},
+            {num:317, word:"drawing", pos:"n.", chinese:"图画", emoji:"🖼️"},
+            {num:318, word:"dream", pos:"n.", chinese:"梦", emoji:"💭"},
+            {num:319, word:"dress", pos:"n.", chinese:"连衣裙", emoji:"👗"},
+            {num:320, word:"drink", pos:"v./n.", chinese:"喝；饮料", emoji:"🥤"},
+            {num:321, word:"drive", pos:"v.", chinese:"驾驶", emoji:"🚗"},
+            {num:322, word:"driver", pos:"n.", chinese:"司机", emoji:"🚗"},
+            {num:323, word:"drop", pos:"v.", chinese:"掉落", emoji:"⬇️"},
+            {num:324, word:"drum", pos:"n.", chinese:"鼓", emoji:"🥁"},
+            {num:325, word:"dry", pos:"adj.", chinese:"干的", emoji:"☀️"},
+            {num:326, word:"duck", pos:"n.", chinese:"鸭子", emoji:"🦆"},
+            {num:327, word:"during", pos:"prep.", chinese:"在……期间", emoji:"⏰"},
+            
+            // E
+            {num:328, word:"ear", pos:"n.", chinese:"耳朵", emoji:"👂"},
+            {num:329, word:"earth", pos:"n.", chinese:"地球", emoji:"🌍"},
+            {num:330, word:"east", pos:"n.", chinese:"东方", emoji:"➡️"},
+            {num:331, word:"easy", pos:"adj.", chinese:"容易的", emoji:"✅"},
+            {num:332, word:"eat", pos:"v.", chinese:"吃", emoji:"🍽️"},
+            {num:333, word:"egg", pos:"n.", chinese:"蛋", emoji:"🥚"},
+            {num:334, word:"eight", pos:"num.", chinese:"八", emoji:"8️⃣"},
+            {num:335, word:"eighteen", pos:"num.", chinese:"十八", emoji:"1️⃣"},
+            {num:336, word:"eighty", pos:"num.", chinese:"八十", emoji:"8️⃣"},
+            {num:337, word:"electronic", pos:"adj.", chinese:"电子的", emoji:"💻"},
+            {num:338, word:"elephant", pos:"n.", chinese:"大象", emoji:"🐘"},
+            {num:339, word:"elevator", pos:"n.", chinese:"电梯", emoji:"🛗"},
+            {num:340, word:"eleven", pos:"num.", chinese:"十一", emoji:"1️⃣"},
+            {num:341, word:"email", pos:"n.", chinese:"电子邮件", emoji:"📧"},
+            {num:342, word:"empty", pos:"adj.", chinese:"空的", emoji:"⬜"},
+            {num:343, word:"end", pos:"n.", chinese:"结束", emoji:"🔚"},
+            {num:344, word:"enemy", pos:"n.", chinese:"敌人", emoji:"🦹"},
+            {num:345, word:"energy", pos:"n.", chinese:"能量", emoji:"⚡"},
+            {num:346, word:"engineer", pos:"n.", chinese:"工程师", emoji:"👷"},
+            {num:347, word:"England", pos:"n.", chinese:"英格兰", emoji:"🏴󠁧󠁢󠁥󠁮󠁧󠁿"},
+            {num:348, word:"English", pos:"n./adj.", chinese:"英语；英国的", emoji:"🇬🇧"},
+            {num:349, word:"enjoy", pos:"v.", chinese:"享受", emoji:"😊"},
+            {num:350, word:"enough", pos:"adj.", chinese:"足够的", emoji:"✅"},
+            {num:351, word:"enter", pos:"v.", chinese:"进入", emoji:"🚪"},
+            {num:352, word:"entrance", pos:"n.", chinese:"入口", emoji:"🚪"},
+            {num:353, word:"environment", pos:"n.", chinese:"环境", emoji:"🌿"},
+            {num:354, word:"eraser", pos:"n.", chinese:"橡皮擦", emoji:"🧹"},
+            {num:355, word:"escape", pos:"v.", chinese:"逃跑", emoji:"🏃"},
+            {num:356, word:"euro", pos:"n.", chinese:"欧元", emoji:"💶"},
+            {num:357, word:"Europe", pos:"n.", chinese:"欧洲", emoji:"🌍"},
+            {num:358, word:"even", pos:"adv.", chinese:"甚至", emoji:"⚡"},
+            {num:359, word:"evening", pos:"n.", chinese:"傍晚", emoji:"🌆"},
+            {num:360, word:"event", pos:"n.", chinese:"事件", emoji:"📋"},
+            {num:361, word:"ever", pos:"adv.", chinese:"曾经", emoji:"❓"},
+            {num:362, word:"every", pos:"adj.", chinese:"每个", emoji:"📊"},
+            {num:363, word:"everybody", pos:"pron.", chinese:"每个人", emoji:"👥"},
+            {num:364, word:"everyone", pos:"pron.", chinese:"每个人", emoji:"👥"},
+            {num:365, word:"everything", pos:"pron.", chinese:"每件事", emoji:"📦"},
+            {num:366, word:"everywhere", pos:"adv.", chinese:"到处", emoji:"🌍"},
+            {num:367, word:"exam", pos:"n.", chinese:"考试", emoji:"📝"},
+            {num:368, word:"example", pos:"n.", chinese:"例子", emoji:"📝"},
+            {num:369, word:"excellent", pos:"adj.", chinese:"优秀的", emoji:"🌟"},
+            {num:370, word:"except", pos:"prep.", chinese:"除了", emoji:"➖"},
+            {num:371, word:"excited", pos:"adj.", chinese:"兴奋的", emoji:"🎉"},
+            {num:372, word:"exciting", pos:"adj.", chinese:"令人兴奋的", emoji:"🎉"},
+            {num:373, word:"excuse", pos:"n./v.", chinese:"借口；原谅", emoji:"🙏"},
+            {num:374, word:"exercise", pos:"n.", chinese:"练习；运动", emoji:"🏋️"},
+            {num:375, word:"exit", pos:"n.", chinese:"出口", emoji:"🚪"},
+            {num:376, word:"expensive", pos:"adj.", chinese:"昂贵的", emoji:"💎"},
+            {num:377, word:"experience", pos:"n.", chinese:"经验", emoji:"👴"},
+            {num:378, word:"experiment", pos:"n.", chinese:"实验", emoji:"🔬"},
+            {num:379, word:"explain", pos:"v.", chinese:"解释", emoji:"💡"},
+            {num:380, word:"explore", pos:"v.", chinese:"探索", emoji:"🗺️"},
+            {num:381, word:"extra", pos:"adj.", chinese:"额外的", emoji:"➕"},
+            {num:382, word:"extremely", pos:"adv.", chinese:"极其", emoji:"⚡"},
+            {num:383, word:"eye", pos:"n.", chinese:"眼睛", emoji:"👁️"},
+            
+            // F
+            {num:384, word:"face", pos:"n.", chinese:"脸", emoji:"😊"},
+            {num:385, word:"fact", pos:"n.", chinese:"事实", emoji:"✅"},
+            {num:386, word:"factory", pos:"n.", chinese:"工厂", emoji:"🏭"},
+            {num:387, word:"fail", pos:"v.", chinese:"失败", emoji:"❌"},
+            {num:388, word:"fair", pos:"adj.", chinese:"公平的", emoji:"⚖️"},
+            {num:389, word:"fall", pos:"v.", chinese:"落下", emoji:"🍂"},
+            {num:390, word:"false", pos:"adj.", chinese:"错误的", emoji:"❌"},
+            {num:391, word:"family", pos:"n.", chinese:"家庭", emoji:"👨‍👩‍👧‍👦"},
+            {num:392, word:"famous", pos:"adj.", chinese:"著名的", emoji:"⭐"},
+            {num:393, word:"fan", pos:"n.", chinese:"粉丝；风扇", emoji:"🤩"},
+            {num:394, word:"fantastic", pos:"adj.", chinese:"极好的", emoji:"🌟"},
+            {num:395, word:"farm", pos:"n.", chinese:"农场", emoji:"🌾"},
+            {num:396, word:"farmer", pos:"n.", chinese:"农民", emoji:"👨‍🌾"},
+            {num:397, word:"fashionable", pos:"adj.", chinese:"时尚的", emoji:"👗"},
+            {num:398, word:"fast", pos:"adj.", chinese:"快的", emoji:"🏃"},
+            {num:399, word:"fat", pos:"adj.", chinese:"胖的", emoji:"🐽"},
+            {num:400, word:"father", pos:"n.", chinese:"父亲", emoji:"👨"},
+            {num:401, word:"favourite", pos:"adj.", chinese:"最喜欢的", emoji:"❤️"},
+            {num:402, word:"fear", pos:"n.", chinese:"恐惧", emoji:"😨"},
+            {num:403, word:"February", pos:"n.", chinese:"二月", emoji:"💕"},
+            {num:404, word:"feed", pos:"v.", chinese:"喂养", emoji:"🍽️"},
+            {num:405, word:"feel", pos:"v.", chinese:"感觉", emoji:"✋"},
+            {num:406, word:"feeling", pos:"n.", chinese:"感觉", emoji:"😊"},
+            {num:407, word:"festival", pos:"n.", chinese:"节日", emoji:"🎉"},
+            {num:408, word:"few", pos:"adj.", chinese:"少数的", emoji:"📊"},
+            {num:409, word:"field", pos:"n.", chinese:"田野", emoji:"🌾"},
+            {num:410, word:"fifteen", pos:"num.", chinese:"十五", emoji:"1️⃣"},
+            {num:411, word:"fifth", pos:"num.", chinese:"第五", emoji:"5️⃣"},
+            {num:412, word:"fifty", pos:"num.", chinese:"五十", emoji:"5️⃣"},
+            {num:413, word:"fight", pos:"v.", chinese:"打架", emoji:"🥊"},
+            {num:414, word:"fill", pos:"v.", chinese:"装满", emoji:"🧊"},
+            {num:415, word:"film", pos:"n.", chinese:"电影", emoji:"🎬"},
+            {num:416, word:"final", pos:"adj.", chinese:"最后的", emoji:"🔚"},
+            {num:417, word:"find", pos:"v.", chinese:"找到", emoji:"🔍"},
+            {num:418, word:"fine", pos:"adj.", chinese:"好的", emoji:"👌"},
+            {num:419, word:"finger", pos:"n.", chinese:"手指", emoji:"☝️"},
+            {num:420, word:"finish", pos:"v.", chinese:"完成", emoji:"✅"},
+            {num:421, word:"fire", pos:"n.", chinese:"火", emoji:"🔥"},
+            {num:422, word:"fire engine", pos:"n.", chinese:"消防车", emoji:"🚒"},
+            {num:423, word:"firefighter", pos:"n.", chinese:"消防员", emoji:"👨‍🚒"},
+            {num:424, word:"first", pos:"adj.", chinese:"第一", emoji:"1️⃣"},
+            {num:425, word:"fish", pos:"n.", chinese:"鱼", emoji:"🐟"},
+            {num:426, word:"fit", pos:"v.", chinese:"适合", emoji:"✅"},
+            {num:427, word:"five", pos:"num.", chinese:"五", emoji:"5️⃣"},
+            {num:428, word:"fix", pos:"v.", chinese:"修理", emoji:"🔧"},
+            {num:429, word:"flat", pos:"n.", chinese:"公寓", emoji:"🏢"},
+            {num:430, word:"flight", pos:"n.", chinese:"航班", emoji:"✈️"},
+            {num:431, word:"floor", pos:"n.", chinese:"地板；楼层", emoji:"🪵"},
+            {num:432, word:"flower", pos:"n.", chinese:"花", emoji:"🌸"},
+            {num:433, word:"fly", pos:"v.", chinese:"飞", emoji:"✈️"},
+            {num:434, word:"foggy", pos:"adj.", chinese:"有雾的", emoji:"🌫️"},
+            {num:435, word:"folder", pos:"n.", chinese:"文件夹", emoji:"📁"},
+            {num:436, word:"follow", pos:"v.", chinese:"跟随", emoji:"👣"},
+            {num:437, word:"food", pos:"n.", chinese:"食物", emoji:"🍎"},
+            {num:438, word:"foot", pos:"n.", chinese:"脚", emoji:"🦶"},
+            {num:439, word:"football", pos:"n.", chinese:"足球", emoji:"⚽"},
+            {num:440, word:"for", pos:"prep.", chinese:"为了", emoji:"🎯"},
+            {num:441, word:"forest", pos:"n.", chinese:"森林", emoji:"🌲"},
+            {num:442, word:"forget", pos:"v.", chinese:"忘记", emoji:"🤔"},
+            {num:443, word:"form", pos:"n.", chinese:"表格", emoji:"📋"},
+            {num:444, word:"forty", pos:"num.", chinese:"四十", emoji:"4️⃣"},
+            {num:445, word:"forward", pos:"adv.", chinese:"向前", emoji:"➡️"},
+            {num:446, word:"four", pos:"num.", chinese:"四", emoji:"4️⃣"},
+            {num:447, word:"fourteen", pos:"num.", chinese:"十四", emoji:"1️⃣"},
+            {num:448, word:"fox", pos:"n.", chinese:"狐狸", emoji:"🦊"},
+            {num:449, word:"free", pos:"adj.", chinese:"免费的；自由的", emoji:"🆓"},
+            {num:450, word:"freeze", pos:"v.", chinese:"结冰", emoji:"🥶"},
+            {num:451, word:"freezing", pos:"adj.", chinese:"极冷的", emoji:"🥶"},
+            {num:452, word:"french fries", pos:"n.", chinese:"薯条", emoji:"🍟"},
+            {num:453, word:"Friday", pos:"n.", chinese:"星期五", emoji:"📅"},
+            {num:454, word:"fridge", pos:"n.", chinese:"冰箱", emoji:"🧊"},
+            {num:455, word:"friend", pos:"n.", chinese:"朋友", emoji:"🤝"},
+            {num:456, word:"friendly", pos:"adj.", chinese:"友好的", emoji:"😊"},
+            {num:457, word:"frog", pos:"n.", chinese:"青蛙", emoji:"🐸"},
+            {num:458, word:"from", pos:"prep.", chinese:"来自", emoji:"🌍"},
+            {num:459, word:"front", pos:"n.", chinese:"前面", emoji:"⬆️"},
+            {num:460, word:"fruit", pos:"n.", chinese:"水果", emoji:"🍇"},
+            {num:461, word:"full", pos:"adj.", chinese:"满的", emoji:"😋"},
+            {num:462, word:"fun", pos:"n.", chinese:"乐趣", emoji:"🎉"},
+            {num:463, word:"funny", pos:"adj.", chinese:"有趣的", emoji:"😂"},
+            {num:464, word:"furniture", pos:"n.", chinese:"家具", emoji:"🛋️"},
+            {num:465, word:"future", pos:"n.", chinese:"未来", emoji:"🔮"},
+        ];
+
+        // 合併所有單字
+        const allVocab = [...vocabulary, ...moreVocab];
+        
+        // 補充更多單字到 540 個
+        const extraVocab = [];
+        
+        // 使用完整單字表
+        const fullVocab = allVocab.slice(0, 96);
+        
+        let currentIndex = 0;
+        let shuffledVocab = [...fullVocab];
+        let selectedLetters = [];
+        let quizQuestions = [];
+        let currentQuestion = 0;
+        let score = 0;
+        let learnedWords = new Set();
+        let hintUsed = false;
+
+        // Text-to-Speech
+        function speak(text, lang = 'en') {
+            if ('speechSynthesis' in window) {
+                speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = lang;
+                utterance.rate = 0.85;
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        function speakCurrent() {
+            const word = shuffledVocab[currentIndex].word;
+            speak(word, 'en');
+        }
+
+        function speakCurrentEn() {
+            const word = shuffledVocab[currentIndex].word;
+            speak(word, 'en');
+        }
+
+        function speakCurrentZh() {
+            const chinese = shuffledVocab[currentIndex].chinese;
+            speak(chinese, 'zh-TW');
+        }
+
+        // Flashcard Functions
+        function flipCard() {
+            document.getElementById('flashcard').classList.toggle('flipped');
+        }
+
+        function updateCard() {
+            const card = shuffledVocab[currentIndex];
+            document.getElementById('card-word').textContent = card.word;
+            document.getElementById('card-word-back').textContent = card.word;
+            document.getElementById('card-pos').textContent = card.pos;
+            document.getElementById('card-pos-back').textContent = card.pos;
+            document.getElementById('card-chinese').textContent = card.chinese;
+            
+            // 設定 Emoji
+            const emoji = card.emoji || getWordEmoji(card.word);
+            document.getElementById('card-emoji').textContent = emoji;
+            document.getElementById('card-emoji-back').textContent = emoji;
+            
+            document.getElementById('flashcard').classList.remove('flipped');
+            
+            const progress = ((currentIndex + 1) / shuffledVocab.length) * 100;
+            document.getElementById('flashcard-progress').style.width = progress + '%';
+            document.getElementById('flashcard-progress-text').textContent = `${currentIndex + 1} / ${shuffledVocab.length}`;
+            
+            learnedWords.add(card.num);
+            document.getElementById('learned-count').textContent = learnedWords.size;
+        }
+
+        function nextCard() {
+            currentIndex = (currentIndex + 1) % shuffledVocab.length;
+            updateCard();
+        }
+
+        function prevCard() {
+            currentIndex = (currentIndex - 1 + shuffledVocab.length) % shuffledVocab.length;
+            updateCard();
+        }
+
+        function shuffleCards() {
+            shuffledVocab = [...fullVocab].sort(() => Math.random() - 0.5);
+            currentIndex = 0;
+            updateCard();
+        }
+
+        function resetCards() {
+            shuffledVocab = [...fullVocab];
+            currentIndex = 0;
+            learnedWords.clear();
+            document.getElementById('learned-count').textContent = 0;
+            updateCard();
+        }
+
+        // Mode Switching
+        function switchMode(mode) {
+            document.querySelectorAll('.mode-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(mode + '-section').classList.add('active');
+            
+            if (mode === 'quiz') {
+                initLetterGrid();
+            } else if (mode === 'list') {
+                showWordList();
+            }
+        }
+
+        // Quiz Letter Selection
+        function initLetterGrid() {
+            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+            const grid = document.getElementById('letter-grid');
+            
+            grid.innerHTML = letters.map(letter => {
+                const count = fullVocab.filter(w => w.word.charAt(0).toUpperCase() === letter).length;
+                return `<button class="letter-btn" data-letter="${letter}" onclick="toggleLetter('${letter}')">
+                    ${letter}
+                    ${count > 0 ? `<span class="letter-count">(${count})</span>` : ''}
+                </button>`;
+            }).join('');
+            
+            updateFilterInfo();
+        }
+
+        function toggleLetter(letter) {
+            const btn = document.querySelector(`[data-letter="${letter}"]`);
+            if (selectedLetters.includes(letter)) {
+                selectedLetters = selectedLetters.filter(l => l !== letter);
+                btn.classList.remove('selected');
+            } else {
+                selectedLetters.push(letter);
+                btn.classList.add('selected');
+            }
+            updateFilterInfo();
+        }
+
+        function updateFilterInfo() {
+            const info = document.getElementById('filter-info');
+            if (selectedLetters.length === 0) {
+                info.innerHTML = '請選擇字母後點擊「開始測驗」';
+                info.innerHTML += '<br><button class="control-btn primary" style="margin-top:15px" onclick="startQuiz()">🎯 開始測驗</button>';
+            } else {
+                let total = 0;
+                selectedLetters.forEach(l => {
+                    total += fullVocab.filter(w => w.word.charAt(0).toUpperCase() === l).length;
+                });
+                info.innerHTML = `已選擇 ${selectedLetters.length} 個字母，共 ${total} 個單字`;
+                info.innerHTML += '<br><button class="control-btn primary" style="margin-top:15px" onclick="startQuiz()">🎯 開始測驗</button>';
+            }
+        }
+
+        // Quiz Functions
+        function startQuiz() {
+            if (selectedLetters.length === 0) {
+                alert('請先選擇要測驗的字母！');
+                return;
+            }
+            
+            const filtered = fullVocab.filter(w => 
+                selectedLetters.includes(w.word.charAt(0).toUpperCase())
+            );
+            
+            quizQuestions = [...filtered].sort(() => Math.random() - 0.5).slice(0, Math.min(10, filtered.length));
+            currentQuestion = 0;
+            score = 0;
+            hintUsed = false;
+            
+            document.getElementById('current-score').textContent = 0;
+            document.getElementById('total-questions').textContent = quizQuestions.length;
+            document.getElementById('quiz-container').style.display = 'block';
+            
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = quizQuestions[currentQuestion];
+            const content = document.getElementById('quiz-content');
+            const word = q.word.toLowerCase();
+            
+            content.innerHTML = `
+                <div class="quiz-question">
+                    <div class="quiz-question-num">題目 ${currentQuestion + 1} / ${quizQuestions.length}</div>
+                    <div class="quiz-chinese-hint">
+                        <span style="color:#667eea;font-weight:bold;">中文：</span>${q.chinese}
+                        <button onclick="speak('${q.chinese}', 'zh-TW')" style="margin-left:10px;font-size:1.2rem;border:none;background:none;cursor:pointer;">🔊</button>
+                    </div>
+                    <div class="quiz-word-hint" style="text-align:center;color:#888;font-size:0.9rem;margin-bottom:15px;">
+                        字母數：${word.length} 個字母
+                    </div>
+                    <div class="quiz-input-container" id="letter-inputs">
+                        ${word.split('').map((char, i) => 
+                            `<input type="text" class="letter-box" maxlength="1" data-index="${i}" data-char="${char}" 
+                             onkeyup="handleKeyUp(event, ${i})" oninput="handleInput(event, ${i})">`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('quiz-actions').innerHTML = `
+                <button class="quiz-btn check" onclick="checkAnswer()">✓ 檢查答案</button>
+                <button class="quiz-btn hint" onclick="showHint()">💡 提示一個字母</button>
+            `;
+            
+            setTimeout(() => {
+                const firstInput = document.querySelector('.letter-box');
+                if (firstInput) firstInput.focus();
+            }, 100);
+        }
+
+        function handleInput(e, index) {
+            const value = e.target.value.toLowerCase();
+            e.target.value = value;
+        }
+
+        function handleKeyUp(e, index) {
+            const inputs = document.querySelectorAll('.letter-box');
+            
+            if (e.key === 'Backspace' && index > 0 && !e.target.value) {
+                inputs[index - 1].focus();
+            } else if (e.key !== 'Backspace' && e.key !== 'Enter' && index < inputs.length - 1) {
+                if (e.target.value) {
+                    inputs[index + 1].focus();
+                }
+            } else if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        }
+
+        function showHint() {
+            const inputs = document.querySelectorAll('.letter-box');
+            const emptyInputs = [];
+            
+            inputs.forEach((input, i) => {
+                if (!input.classList.contains('correct') && !input.value) {
+                    emptyInputs.push({input, index: i});
+                }
+            });
+            
+            if (emptyInputs.length > 0) {
+                const random = emptyInputs[Math.floor(Math.random() * emptyInputs.length)];
+                const char = random.input.dataset.char;
+                random.input.value = char;
+                random.input.classList.add('hint');
+                random.input.disabled = true;
+                hintUsed = true;
+            }
+        }
+
+        function checkAnswer() {
+            const inputs = document.querySelectorAll('.letter-box');
+            let allCorrect = true;
+            const word = quizQuestions[currentQuestion].word;
+            
+            inputs.forEach(input => {
+                const userChar = input.value.toLowerCase();
+                const correctChar = input.dataset.char;
+                
+                if (userChar === correctChar) {
+                    input.classList.add('correct');
+                    input.disabled = true;
+                } else {
+                    input.classList.add('wrong');
+                    input.value = correctChar;
+                    input.disabled = true;
+                    allCorrect = false;
+                }
+            });
+            
+            const q = quizQuestions[currentQuestion];
+            const resultDiv = document.createElement('div');
+            resultDiv.style.cssText = 'text-align:center;margin-top:20px;padding:15px;background:#fff;border-radius:10px;';
+            resultDiv.innerHTML = `
+                <div style="font-size:1.5rem;font-weight:bold;color:${allCorrect ? '#28a745' : '#dc3545'};">
+                    ${allCorrect ? '✓ 正確！' : '✗ 錯誤'}
+                </div>
+                <div style="font-size:1.3rem;margin-top:10px;color:#333;">
+                    ${q.word} <button onclick="speak('${q.word}', 'en')" style="font-size:1.2rem;border:none;background:none;cursor:pointer;">🔊</button>
+                </div>
+            `;
+            document.querySelector('.quiz-question').appendChild(resultDiv);
+            
+            if (allCorrect && !hintUsed) {
+                score++;
+                document.getElementById('current-score').textContent = score;
+                speak(word, 'en');
+            }
+            
+            document.getElementById('quiz-actions').innerHTML = `
+                <button class="quiz-btn next" onclick="nextQuestion()">下一題 →</button>
+            `;
+        }
+
+        function nextQuestion() {
+            hintUsed = false;
+            currentQuestion++;
+            if (currentQuestion < quizQuestions.length) {
+                showQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            const percentage = Math.round((score / quizQuestions.length) * 100);
+            let message = '', emoji = '';
+            
+            if (percentage >= 90) { message = '太棒了！你已經掌握了這些單字！'; emoji = '🎉'; }
+            else if (percentage >= 70) { message = '做得很好！繼續加油！'; emoji = '👍'; }
+            else if (percentage >= 50) { message = '還不錯！多練習會更好！'; emoji = '💪'; }
+            else { message = '需要多練習哦！加油！'; emoji = '📚'; }
+            
+            document.getElementById('quiz-content').innerHTML = `
+                <div class="quiz-result">
+                    <h2>${emoji} 測驗完成！</h2>
+                    <div class="quiz-result-score">${score} / ${quizQuestions.length}</div>
+                    <div class="quiz-result-message">${message}</div>
+                </div>
+            `;
+            
+            document.getElementById('quiz-actions').innerHTML = `
+                <button class="quiz-btn restart" onclick="document.getElementById('quiz-container').style.display='none';selectedLetters=[];initLetterGrid();">🔄 再測一次</button>
+            `;
+            
+            document.getElementById('quiz-score').textContent = score;
+        }
+
+        // Word List
+        function showWordList() {
+            const list = document.getElementById('word-list');
+            list.innerHTML = fullVocab.map(word => `
+                <div class="word-item">
+                    <div class="word-info">
+                        <span class="emoji">${word.emoji || getWordEmoji(word.word)}</span>
+                        <div class="num">#${word.num}</div>
+                        <div class="english">${word.word} <span style="color:#667eea;font-size:0.85rem">${word.pos}</span></div>
+                        <div class="chinese">${word.chinese}</div>
+                    </div>
+                    <button class="word-speak" onclick="speak('${word.word}', 'en')">🔊</button>
+                </div>
+            `).join('');
+        }
+
+        function filterWords() {
+            const search = document.getElementById('search-input').value.toLowerCase();
+            const list = document.getElementById('word-list');
+            
+            const filtered = fullVocab.filter(word => 
+                word.word.toLowerCase().includes(search) || 
+                word.chinese.includes(search)
+            );
+            
+            list.innerHTML = filtered.map(word => `
+                <div class="word-item">
+                    <div class="word-info">
+                        <span class="emoji">${word.emoji || getWordEmoji(word.word)}</span>
+                        <div class="num">#${word.num}</div>
+                        <div class="english">${word.word} <span style="color:#667eea;font-size:0.85rem">${word.pos}</span></div>
+                        <div class="chinese">${word.chinese}</div>
+                    </div>
+                    <button class="word-speak" onclick="speak('${word.word}', 'en')">🔊</button>
+                </div>
+            `).join('');
+        }
+
+        // Initialize
+        updateCard();
+    </script>
+</body>
+</html>
