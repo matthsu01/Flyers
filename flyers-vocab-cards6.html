@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flyers 單字卡練習</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Microsoft JhengHei", "PingFang TC", sans-serif; background: #f0f4ff; min-height: 100vh; color: #333; }
+  header { background: linear-gradient(135deg,#4a6cf7,#7b5cf0); color: #fff; padding: 18px 12px; text-align: center; }
+  header h1 { font-size: 1.4rem; }
+  header p { font-size: .85rem; opacity: .85; margin-top: 4px; }
+  .tabs { display: flex; justify-content: center; gap: 10px; margin: 16px auto 8px; flex-wrap: wrap; }
+  .tabs button { padding: 10px 24px; border: none; border-radius: 24px; font-size: 1rem; cursor: pointer; background: #dfe6ff; color: #4a6cf7; font-weight: bold; transition: .2s; }
+  .tabs button.active { background: #4a6cf7; color: #fff; }
+  .panel { max-width: 900px; margin: 0 auto; padding: 12px 16px 40px; }
+  /* 左右箭頭 */
+  .arrow { position: fixed; top: 50%; transform: translateY(-50%); z-index: 10;
+    width: 56px; height: 56px; border: none; border-radius: 50%; font-size: 1.6rem; cursor: pointer;
+    background: #4a6cf7; color: #fff; box-shadow: 0 4px 14px rgba(74,108,247,.4); transition: .2s; display: none; }
+  .arrow:hover { background: #7b5cf0; transform: translateY(-50%) scale(1.1); }
+  .arrow.left { left: 12px; }
+  .arrow.right { right: 12px; }
+  /* 單字卡 */
+  .card-wrap { perspective: 1000px; margin: 18px auto; width: 100%; max-width: 420px; height: 260px; cursor: pointer; }
+  .card { position: relative; width: 100%; height: 100%; transition: transform .5s; transform-style: preserve-3d; }
+  .card.flipped { transform: rotateY(180deg); }
+  .face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 8px 24px rgba(74,108,247,.18); padding: 16px; }
+  .front { background: #fff; }
+  .back { background: #4a6cf7; color: #fff; transform: rotateY(180deg); }
+  .emoji { font-size: 3.4rem; line-height: 1; }
+  .word { font-size: 2rem; font-weight: bold; color: #333; text-align: center; }
+  .pos { font-size: .9rem; color: #999; }
+  .zh { font-size: 1.6rem; font-weight: bold; text-align: center; }
+  .hint { font-size: .8rem; color: #bbb; }
+  .speak-row { display: flex; gap: 12px; }
+  .speak-btn { border: none; background: #eef2ff; border-radius: 50%; width: 52px; height: 52px; font-size: 1.15rem; cursor: pointer; transition: .2s; }
+  .speak-btn:hover { background: #dfe6ff; transform: scale(1.08); }
+  .speak-btn.light { background: rgba(255,255,255,.25); }
+  .speak-btn.sm { width: 38px; height: 38px; font-size: .95rem; }
+  .nav { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 8px; }
+  .nav button { padding: 10px 22px; border: none; border-radius: 12px; background: #4a6cf7; color: #fff; font-size: 1rem; cursor: pointer; }
+  .nav button.ghost { background: #dfe6ff; color: #4a6cf7; }
+  .counter { font-weight: bold; color: #666; }
+  .filter-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 12px; }
+  .filter-row button { border: 1px solid #ccd6ff; background: #fff; color: #4a6cf7; border-radius: 8px; padding: 4px 9px; font-size: .82rem; cursor: pointer; }
+  .filter-row button.active { background: #4a6cf7; color: #fff; }
+  /* 單字列表 */
+  .list-tools { display: flex; gap: 10px; justify-content: center; margin: 14px 0; flex-wrap: wrap; }
+  .list-tools input { padding: 9px 16px; border: 1px solid #ccd6ff; border-radius: 20px; font-size: 1rem; width: min(320px,80vw); outline: none; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 12px; }
+  .item { background: #fff; border-radius: 14px; padding: 12px 10px; text-align: center; box-shadow: 0 3px 10px rgba(74,108,247,.10); }
+  .item .em { font-size: 1.9rem; }
+  .item .wd { font-weight: bold; margin-top: 4px; word-break: break-word; }
+  .item .ps { font-size: .75rem; color: #999; }
+  .item .zw { font-size: .9rem; color: #555; margin-top: 2px; }
+  .item button { margin-top: 6px; }
+  /* 測驗 */
+  .quiz-box { background: #fff; border-radius: 20px; padding: 28px 20px; box-shadow: 0 8px 24px rgba(74,108,247,.15); text-align: center; margin-top: 18px; max-width: 640px; margin-left: auto; margin-right: auto; }
+  .quiz-zh { font-size: 1.5rem; font-weight: bold; margin-bottom: 4px; }
+  .quiz-pos { color: #999; font-size: .9rem; margin-bottom: 18px; }
+  .blanks { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-bottom: 18px; }
+  .ch { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 44px; font-size: 1.4rem; font-weight: bold; }
+  .ch.shown { color: #4a6cf7; border-bottom: 3px solid #ccd6ff; }
+  .ch input { width: 34px; height: 44px; text-align: center; font-size: 1.4rem; font-weight: bold; border: none; border-bottom: 3px solid #4a6cf7; background: #f6f8ff; outline: none; text-transform: lowercase; }
+  .ch input.ok { color: #1a9c4b; border-bottom-color: #1a9c4b; background: #e9f9ef; }
+  .ch input.bad { color: #d33; border-bottom-color: #d33; background: #fdecec; }
+  .ch.space { width: 16px; }
+  .ch.punct { color: #aaa; }
+  .setup-label { font-weight: bold; margin: 14px 0 8px; color: #555; }
+  .setup-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .setup-row button { padding: 8px 18px; border: 1px solid #ccd6ff; background: #fff; color: #4a6cf7; border-radius: 18px; font-size: .95rem; cursor: pointer; }
+  .setup-row button.active { background: #4a6cf7; color: #fff; }
+  .quiz-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .quiz-actions button { padding: 10px 20px; border: none; border-radius: 12px; font-size: 1rem; cursor: pointer; background: #4a6cf7; color: #fff; }
+  .quiz-actions button.ghost { background: #dfe6ff; color: #4a6cf7; }
+  .quiz-actions button.warn { background: #f7a54a; }
+  .feedback { margin-top: 14px; font-size: 1.15rem; font-weight: bold; min-height: 1.6em; }
+  .feedback.good { color: #1a9c4b; }
+  .feedback.bad { color: #d33; }
+  .score { margin-top: 6px; color: #666; }
+
+  /* 下載提示列（Android Chrome 相容） */
+  #dlBar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 99; display: none;
+    align-items: center; justify-content: center; gap: 10px; padding: 14px 16px;
+    background: #333; box-shadow: 0 -4px 16px rgba(0,0,0,.25); flex-wrap: wrap; }
+  #dlBar a { color: #ffd54a; font-weight: bold; font-size: .95rem; word-break: break-all; }
+  #dlBar .tip { color: #bbb; font-size: .8rem; width: 100%; text-align: center; }
+  #dlBar button { border: none; background: #666; color: #fff; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; flex-shrink: 0; }
+  /* 例句卡 */
+  .sent-card { max-width: 460px; margin: 18px auto; background: #fff; border-radius: 20px;
+    box-shadow: 0 8px 24px rgba(74,108,247,.18); padding: 26px 20px; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .sent-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .sent-head .em { font-size: 2.2rem; }
+  .sent-head .wd { font-size: 1.5rem; font-weight: bold; color: #4a6cf7; }
+  .sent-en { font-size: 1.25rem; font-weight: bold; line-height: 1.5; }
+  .sent-zh { font-size: 1.05rem; color: #666; line-height: 1.5; }
+  /* 學習歷程 */
+  .hist-summary { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 16px 0; }
+  .stat-card { background: #fff; border-radius: 14px; padding: 14px 20px; text-align: center; box-shadow: 0 3px 10px rgba(74,108,247,.10); min-width: 110px; }
+  .stat-card .num { font-size: 1.6rem; font-weight: bold; color: #4a6cf7; }
+  .stat-card .lbl { font-size: .8rem; color: #888; margin-top: 2px; }
+  .hist-actions { display: flex; gap: 10px; justify-content: center; margin-bottom: 14px; flex-wrap: wrap; }
+  .hist-actions button { padding: 9px 18px; border: none; border-radius: 12px; font-size: .95rem; cursor: pointer; background: #4a6cf7; color: #fff; }
+  .hist-actions button.ghost { background: #dfe6ff; color: #4a6cf7; }
+  .hist-actions button.danger { background: #e05a5a; }
+  .hist-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 3px 10px rgba(74,108,247,.08); font-size: .88rem; }
+  .hist-table th { background: #4a6cf7; color: #fff; padding: 9px 6px; }
+  .hist-table td { padding: 7px 6px; border-bottom: 1px solid #eef2ff; text-align: center; }
+  .hist-table tr:nth-child(even) td { background: #f8faff; }
+  @media (max-width: 480px) { .word { font-size: 1.6rem; } .emoji { font-size: 2.6rem; } .ch, .ch input { width: 28px; height: 38px; font-size: 1.15rem; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>📚 Flyers 單字卡練習</h1>
+  <p>Cambridge YLE Flyers Word List ｜ 點卡片翻面 ｜ 🔊 聽發音</p>
+</header>
+<div class="tabs">
+  <button id="tabCard" class="active" onclick="switchMode('card')">🃏 單字卡</button>
+  <button id="tabList" onclick="switchMode('list')">📋 單字列表</button>
+  <button id="tabQuiz" onclick="switchMode('quiz')">✏️ 填空測驗</button>
+  <button id="tabSent" onclick="switchMode('sent')">💬 例句卡</button>
+  <button id="tabHistory" onclick="switchMode('history')">📊 學習歷程</button>
+</div>
+
+<!-- 下載提示列 -->
+<div id="dlBar"></div>
+
+<!-- 左右翻卡箭頭 -->
+<button class="arrow left" id="arrowL" title="上一張" onclick="arrowNav(-1)">⬅</button>
+<button class="arrow right" id="arrowR" title="下一張" onclick="arrowNav(1)">➡</button>
+
+<!-- 單字卡模式 -->
+<div class="panel" id="cardPanel">
+  <div class="nav" style="margin-bottom:4px">
+    <button class="ghost" onclick="shuffleCards()">🔀 洗牌</button>
+    <button class="ghost" id="autoBtn" onclick="toggleAuto()">🔁 自動播放</button>
+    <span class="counter" id="cardCounter"></span>
+  </div>
+  <div class="card-wrap" onclick="flipCard()">
+    <div class="card" id="card">
+      <div class="face front">
+        <div class="emoji" id="cardEmoji"></div>
+        <div class="word" id="cardWord"></div>
+        <div class="pos" id="cardPos"></div>
+        <div class="speak-row">
+          <button class="speak-btn" title="英文發音" onclick="event.stopPropagation();speakEn()">🔊 EN</button>
+          <button class="speak-btn" title="中文發音" onclick="event.stopPropagation();speakZh()">🔊 中</button>
+        </div>
+        <div class="hint">點卡片看中文意思</div>
+      </div>
+      <div class="face back">
+        <div class="emoji" id="cardEmojiBack"></div>
+        <div class="zh" id="cardZh"></div>
+        <button class="speak-btn light" onclick="event.stopPropagation();speakZh()">🔊 中文發音</button>
+        <div class="hint" style="color:rgba(255,255,255,.7)">再點一次回英文</div>
+      </div>
+    </div>
+  </div>
+  <div class="nav">
+    <button class="ghost" onclick="prevCard()">⬅ 上一個</button>
+    <button onclick="speakEn()">🔊 發音</button>
+    <button class="ghost" onclick="nextCard()">下一個 ➡</button>
+  </div>
+  <div class="filter-row" id="letterFilter"></div>
+</div>
+
+<!-- 單字列表模式 -->
+<div class="panel" id="listPanel" style="display:none">
+  <div class="list-tools">
+    <input id="searchBox" placeholder="🔍 搜尋英文或中文…" oninput="renderList()">
+  </div>
+  <div class="filter-row" id="listLetterFilter"></div>
+  <div class="grid" id="wordGrid"></div>
+</div>
+
+
+
+<!-- 例句卡模式 -->
+<div class="panel" id="sentPanel" style="display:none">
+  <div class="nav" style="margin-bottom:4px">
+    <button class="ghost" id="sentAutoBtn" onclick="toggleSentAuto()">🔁 自動播放</button>
+    <span class="counter" id="sentCounter"></span>
+  </div>
+  <div class="filter-row" id="sentLetterFilter"></div>
+  <div class="sent-card">
+    <div class="sent-head">
+      <span class="em" id="sentEmoji"></span>
+      <span class="wd" id="sentWord"></span>
+    </div>
+    <div class="sent-en" id="sentEn"></div>
+    <div class="sent-zh" id="sentZh"></div>
+    <div class="speak-row">
+      <button class="speak-btn" title="例句英文發音" onclick="speakSentEn()">🔊 EN</button>
+      <button class="speak-btn" title="例句中文發音" onclick="speakSentZh()">🔊 中</button>
+    </div>
+  </div>
+  <div class="nav">
+    <button class="ghost" onclick="prevSent()">⬅ 上一句</button>
+    <button onclick="speakSentEn()">🔊 發音</button>
+    <button class="ghost" onclick="nextSent()">下一句 ➡</button>
+  </div>
+</div>
+
+<!-- 學習歷程模式 -->
+<div class="panel" id="historyPanel" style="display:none">
+  <div class="hist-summary" id="histSummary"></div>
+  <div class="hist-actions">
+    <button onclick="downloadCSV()">⬇️ 下載 CSV</button>
+    <button onclick="downloadTXT()">⬇️ 下載 TXT</button>
+    <button class="danger" onclick="clearHistory()">🗑️ 清除紀錄</button>
+  </div>
+  <div style="overflow-x:auto">
+    <table class="hist-table">
+      <thead><tr><th>時間</th><th>類型</th><th>英文</th><th>中文</th><th>結果</th></tr></thead>
+      <tbody id="histBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 測驗模式 -->
+<div class="panel" id="quizPanel" style="display:none">
+  <!-- 測驗設定 -->
+  <div class="quiz-box" id="quizSetup">
+    <div style="font-size:1.2rem;font-weight:bold;margin-bottom:14px">⚙️ 測驗設定</div>
+    <div class="setup-label">測驗題數</div>
+    <div class="setup-row" id="countRow">
+      <button data-c="10" class="active">10 題</button>
+      <button data-c="20">20 題</button>
+      <button data-c="30">30 題</button>
+      <button data-c="all">全部</button>
+    </div>
+    <div class="setup-label">字母種類</div>
+    <div class="setup-row" id="quizLetterRow"></div>
+    <div style="margin-top:18px">
+      <button style="padding:12px 40px;font-size:1.1rem" onclick="startQuiz()">🚀 開始測驗</button>
+    </div>
+    <div class="score" id="setupInfo" style="margin-top:12px"></div>
+  </div>
+
+  <!-- 測驗進行中 -->
+  <div class="quiz-box" id="quizMain" style="display:none">
+    <div class="quiz-zh" id="quizZh"></div>
+    <div class="quiz-pos" id="quizPos"></div>
+    <div class="blanks" id="quizBlanks"></div>
+    <div class="quiz-actions">
+      <button onclick="checkQuiz()">✅ 檢查答案</button>
+      <button class="warn" onclick="revealQuiz()">👀 顯示答案</button>
+      <button class="ghost" onclick="quizHint()">🔊 發音提示</button>
+      <button class="ghost" onclick="nextQuiz()">下一題 ➡</button>
+    </div>
+    <div class="feedback" id="quizFeedback"></div>
+    <div class="score" id="quizScore"></div>
+    <div style="margin-top:10px"><button class="ghost" onclick="backToSetup()" style="padding:8px 16px;font-size:.9rem;border:none;border-radius:10px;background:#dfe6ff;color:#4a6cf7;cursor:pointer">⚙️ 重新設定</button></div>
+  </div>
+
+  <!-- 測驗結果 -->
+  <div class="quiz-box" id="quizResult" style="display:none">
+    <div style="font-size:3rem">🏁</div>
+    <div style="font-size:1.4rem;font-weight:bold;margin:10px 0" id="resultText"></div>
+    <div class="quiz-actions">
+      <button onclick="startQuiz()">🔁 再測一次</button>
+      <button class="ghost" onclick="backToSetup()">⚙️ 重新設定</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// [英文, 詞性, 中文, Emoji]
+const WORDS = [
+["a.m.","","上午","🕗"],["across","prep","橫越，穿過","🌉"],["act","v","扮演","🎭"],["actor","n","(男)演員","🎬"],["actually","adv","實際上","💡"],["adventure","n","冒險","🗺️"],["after","adv/conj","之後；在…之後","⏭️"],["ago","adv","在…以前","⏪"],["agree","v","同意；贊同","🤝"],["air","n","空氣","💨"],["airport","n","機場","✈️"],["alone","adj","單獨的","🧍"],["already","adv","已經","✅"],["also","adv","也","➕"],["amazing","adj/excl","令人吃驚的","😲"],["ambulance","n","救護車","🚑"],["anyone","pron","任何人","🙋"],["anything","pron","任何東西","📦"],["anywhere","adv","在任何地方","🌐"],["appear","v","出現","✨"],["April","n","四月","📅"],["arrive","v","到達","🛬"],["art","n","藝術；美術","🎨"],["artist","n","藝術家","👨‍🎨"],["as","adv","跟…一樣地","⚖️"],["as ... as","adv","像…一樣","🔄"],["astronaut","n","太空人","🧑‍🚀"],["at the moment","adv","現在；目前","⏰"],["August","n","八月","📅"],["autumn","n","秋天","🍂"],["away","adv","離開","👋"],
+["backpack","n","背包","🎒"],["bandage","n","繃帶","🩹"],["bank","n","銀行","🏦"],["beetle","n","甲蟲","🪲"],["before","adv/conj","在…以前","⏮️"],["begin","v","開始","▶️"],["believe","v","相信","🙏"],["belt","n","皮帶","👔"],["Betty","n","貝蒂（人名）","👧"],["bicycle","n","腳踏車","🚲"],["bin","n","垃圾箱","🗑️"],["biscuit","n","餅乾","🍪"],["bit","n","小塊；a bit 有一點兒","🤏"],["bored","adj","厭倦的","🥱"],["borrow","v","借","📚"],["bracelet","n","手鐲","📿"],["break","v","打破；弄壞","💔"],["bridge","n","橋","🌉"],["broken","adj","損壞的","🔨"],["brush","n/v","梳子；梳頭髮","🪮"],["burn","v","燒焦","🔥"],["business","n","生意","💼"],["businessman/woman","n","商人","🧑‍💼"],["butter","n","奶油","🧈"],["butterfly","n","蝴蝶","🦋"],["by myself","adv","靠我自己","💪"],["by yourself","adv","靠你自己","🫵"],
+["calendar","n","日曆","📅"],["camel","n","駱駝","🐫"],["camp","v","露營","🏕️"],["card","n","紙牌；卡片","🃏"],["cartoon","n","卡通","📺"],["castle","n","城堡","🏰"],["cave","n","洞穴","🕳️"],["century","n","世紀","📜"],["cereal","n","麥片","🥣"],["channel","n","頻道","📡"],["chat","v","閒談","💬"],["cheap","adj","便宜的","💰"],["chemist's","n","藥局；藥劑師","💊"],["chess","n","西洋棋","♟️"],["chopsticks","n","筷子","🥢"],["club","n","俱樂部","🏟️"],["collect","v","收集","🗂️"],["college","n","大學","🎓"],["comb","n/v","梳子；梳理","💇"],["competition","n","比賽；競賽","🏆"],["concert","n","音樂會","🎵"],["conversation","n","會話","🗣️"],["cooker","n","烹調器具","🍳"],["cookie","n","餅乾（美式）","🍪"],["corner","n","街角","📐"],["costume","n","服裝","👘"],["could","v","可能","🤔"],["creature","n","生物","🐾"],["crown","n","王冠","👑"],["cushion","n","墊子","🛋️"],["cut","v","切；割；剪","✂️"],["cycle","v","騎自行車；循環","🚴"],
+["dark","adj","黑暗的","🌑"],["date","n","日期","📆"],["David","n","大衛（人名）","👦"],["dear","adj","親愛的","💌"],["December","n","十二月","📅"],["decide","v","決定","🤔"],["deep","adj","深的","🌊"],["delicious","adj","美味的","😋"],["desert","n","沙漠","🏜️"],["design","n/v","設計","📐"],["designer","n","設計師","🧑‍🎨"],["diary","n","日記","📔"],["dictionary","n","字典","📖"],["dinosaur","n","恐龍","🦕"],["disappear","v","消失","💨"],["drum","n","鼓","🥁"],["during","prep","在…的期間","⏳"],
+["each","det/pron","每個","☝️"],["eagle","n","老鷹","🦅"],["early","adj/adv","早的","🌅"],["Earth","n","地球","🌍"],["east","n","東方，東部","🧭"],["elbow","n","肘","💪"],["else","adv","其他，另外","➕"],["Emma","n","艾瑪（人名）","👧"],["empty","adj","空的","🫙"],["end","v","結束；終止","🔚"],["engine","n","引擎","🚂"],["engineer","n","工程師","👷"],["enormous","adj","巨大的","🦣"],["enough","adj/pron","足夠的","👌"],["enter","v","參加；進入","🚪"],["entrance","n","入口","🚪"],["envelope","n","信封","✉️"],["environment","n","環境","🌳"],["ever","adv","曾經","🕰️"],["everywhere","adv","到處","🌍"],["excellent","adj/excl","極好的；傑出的","🌟"],["excited","adj","興奮的","🤩"],["exit","n","出口","🚪"],["expensive","adj","昂貴的","💎"],["explain","v","解釋","💭"],["explore","v","探索","🔍"],["extinct","adj","滅絕的","🦴"],
+["factory","n","工廠","🏭"],["fall","n","秋天（美式）","🍂"],["fall over","v","跌倒","🤕"],["far","adj/adv","遠的；遙遠地","🔭"],["fast","adj/adv","快的","⚡"],["February","n","二月","📅"],["feel","v","感覺","🖐️"],["festival","n","節日","🎆"],["fetch","v","(去)拿來","🐕"],["a few","det","幾個","🔢"],["file","n","檔案；文件夾","📁"],["find out","v","找出；發現；查明","🔎"],["finger","n","手指","👆"],["finish","v","結束","🏁"],["fire","n","火","🔥"],["fire engine","n","消防車","🚒"],["fire fighter","n","消防員","🧑‍🚒"],["fire station","n","消防局","🚒"],["flag","n","旗子","🚩"],["flashlight","n","手電筒","🔦"],["flour","n","麵粉","🌾"],["fog","n","霧","🌫️"],["foggy","adj","多霧的","🌫️"],["follow","v","跟隨","👣"],["for","prep","在（指定時間）","🕐"],["forget","v","忘記","😵"],["fork","n","叉子","🍴"],["Frank","n","法蘭克（人名）","👦"],["fridge","n","冰箱","🧊"],["friendly","adj","友善的","😊"],["frightening","adj","使人驚嚇的","😱"],["front","adj/n","前面的；前面","➡️"],["full","adj","充滿的","🈵"],["fur","n","毛皮","🦊"],["furry","adj","毛茸茸的","🐻"],["future","n","未來","🔮"],
+["gate","n","大門","🚪"],["geography","n","地理學","🗺️"],["George","n","喬治（人名）","👦"],["get to","v","開始","🚀"],["glass","adj","玻璃製的","🥛"],["glove","n","手套","🧤"],["glue","n/v","膠水；黏貼","🩹"],["go away!","excl","走開！","👋"],["go out","v","出門；外出","🚶"],["gold","adj/n","金色的；黃金","🥇"],["golf","n","高爾夫球","⛳"],["group","n","群；組","👥"],["guess","n/v","猜","🎲"],["gym","n","體育館；健身房","🏋️"],
+["half","adj/n","一半的；一半","➗"],["happen","v","發生","💥"],["hard","adj/adv","困難的；硬的；努力地","💎"],["Harry","n","哈利（人名）","👦"],["hate","v","嫌惡，不喜歡","😤"],["hear","v","聽","👂"],["heavy","adj","重的","🏋️"],["Helen","n","海倫（人名）","👧"],["high","adj","高的","📏"],["hill","n","小山","⛰️"],["history","n","歷史","📜"],["hole","n","洞","🕳️"],["Holly","n","荷莉（人名）","👧"],["honey","n","蜂蜜","🍯"],["hope","v","希望","🌟"],["horrible","adj","可怕的","😨"],["hotel","n","旅館；飯店","🏨"],["hour","n","小時","🕐"],["how long","adv/int","有多久","⏱️"],["hurry","v","趕緊","🏃"],["husband","n","丈夫","🤵"],
+["if","conj","如果；假如","❓"],["if you want!","excl","如果你想要的話","🤷"],["important","adj","重要的","⭐"],["improve","v","改進，改善","📈"],["in a minute!","excl","馬上；立刻","⏰"],["information","n","資訊","ℹ️"],["insect","n","昆蟲","🐛"],["instead","adv","作為替代","🔄"],["instrument","n","樂器","🎸"],["interested","adj","感興趣的","👀"],["interesting","adj","有趣的","🤩"],["invent","v","發明","💡"],["invitation","n","邀請","💌"],
+["jam","n","果醬；堵塞","🍓"],["January","n","一月","📅"],["job","n","工作","💼"],["join","v","參加（社團）","🤝"],["journalist","n","新聞記者","📰"],["journey","n","旅行","🧳"],["July","n","七月","📅"],["June","n","六月","📅"],["just","adv","正好；僅僅；只是","☝️"],
+["Katy","n","凱蒂（人名）","👧"],["keep","v","保有","🔒"],["key","n","鑰匙；線索","🔑"],["kilometre","n","公里","📏"],["kind","adj","親切的","💖"],["king","n","國王","🤴"],["knee","n","膝蓋","🦵"],["knife","n","刀","🔪"],
+["land","v","登陸；降落","🛬"],["language","n","語言","🗣️"],["large","adj","大的","🐘"],["late","adj/adv","遲的；遲到","⏰"],["later","adv","較晚地；後來","🕐"],["lazy","adj","懶散的","😴"],["leave","v","離開","👋"],["left","adj/n","左方的；左邊","⬅️"],["let","v","讓","👌"],["letter","n","信","✉️"],["lie down","v","躺","🛏️"],["lift","n","電梯（英式）","🛗"],["lift","v","舉起；抬起","🏋️"],["light","adj/n","輕的；燈；光線","💡"],["a little","adv/det","一點","🤏"],["London","n","倫敦（英國首都）","🇬🇧"],["look after","v","照顧","🤱"],["look like","v","看起來像是","👀"],["lovely","adj","可愛的","😍"],["low","adj","低的；矮的；淺的","⬇️"],["lucky","adj","幸運的","🍀"],
+["magazine","n","雜誌","📖"],["make sure","v","確定","✅"],["manager","n","經理","👨‍💼"],["March","n","三月","📅"],["married","adj","已婚的","💍"],["match","n","比賽；對手","⚽"],["maths","n","數學","🔢"],["May","n","五月","📅"],["may","v","可能","🤔"],["meal","n","一餐","🍽️"],["mechanic","n","技工","🔧"],["medicine","n","藥","💊"],["meet","v","遇見；滿足","🤝"],["meeting","n","會議","👥"],["member","n","會員","🪪"],["metal","adj/n","金屬","⚙️"],["Michael","n","麥可（人名）","👦"],["midday","n","正午；中午","🕛"],["middle","n/adj","中間；中間的","⏺️"],["midnight","n","半夜十二點","🌃"],["might","v","可能；可以","🤔"],["million","n","百萬","💰"],["mind","v","介意","🧠"],["minute","n","分鐘","⏱️"],["missing","adj","失蹤的；找不到的","🔍"],["mix","v","使混合","🥣"],["money","n","錢","💵"],["month","n","月","🗓️"],["motorway","n","高速公路","🛣️"],["much","adv/det/pron","非常；許多","💯"],["museum","n","博物館","🏛️"],
+["necklace","n","項鍊","📿"],["nest","n","巢","🪹"],["news","n","新聞；消息","📰"],["newspaper","n","報紙","📰"],["next","adj/adv","接下去的","⏭️"],["no problem!","excl","沒問題！","👌"],["noisy","adj","喧鬧的","📢"],["no-one","pron","沒人","🚫"],["north","n","北方","🧭"],["November","n","十一月","📅"],["nowhere","adv","無處","❓"],
+["ocean","n","海洋","🌊"],["October","n","十月","📅"],["octopus","n","章魚","🐙"],["of course","adv","當然","💯"],["office","n","辦公室","🏢"],["Oliver","n","奧利佛（人名）","👦"],["olives","n","橄欖","🫒"],["once","adv","一次；從前","☝️"],["online","adj","線上的","💻"],["other","det/pron","其餘的人（或物）","↔️"],["oven","n","烤箱","🔥"],["over","adv/prep","在…之上","⬆️"],
+["p.m.","","下午；午後","🕐"],["pajamas","n","睡衣褲","🛌"],["passenger","n","乘客","🧍"],["past","n/prep","過去；經過","⏪"],["path","n","小徑","🛤️"],["pepper","n","胡椒粉；辣椒","🌶️"],["perhaps","adv","或許，可能","🤷"],["photographer","n","攝影師","📸"],["piece","n","一個；一張；一片","🧩"],["pilot","n","飛行員","🧑‍✈️"],["pizza","n","披薩","🍕"],["planet","n","行星","🪐"],["plastic","adj/n","塑膠（製）的；塑膠","🧴"],["platform","n","月台","🚉"],["pleased","adj","開心的；滿意的","😊"],["pocket","n","口袋","👖"],["police officer","n","員警","👮"],["police station","n","警察局","🚓"],["pond","n","池塘","🦆"],["poor","adj","貧窮的","🥺"],["pop music","n","流行音樂","🎤"],["popular","adj","流行的；受歡迎的","🌟"],["post","v","郵寄","📮"],["post office","n","郵局","🏤"],["postcard","n","明信片","🏞️"],["prefer","v","寧可；更喜愛","❤️"],["prepare","v","準備","📋"],["prize","n","獎；獎賞；獎金","🏆"],["problem","n","問題","❓"],["programme","n","節目","📺"],["project","n","計畫","📊"],["pull","v","拉","🤏"],["push","v","推","✋"],["puzzle","n","拼圖；謎","🧩"],["pyjamas","n","睡衣褲（英式）","🛌"],["pyramid","n","金字塔","🔺"],
+["quarter","n","四分之一","🕐"],["queen","n","女王","👸"],["quite","adv","相當；很；頗","👍"],["quiz","n","測驗","📝"],
+["race","n/v","賽跑","🏁"],["racing","adj","比賽（汽車；自行車）","🏎️"],["railway","n","鐵路","🛤️"],["ready","adj","準備好的","✅"],["remember","v","記得","🧠"],["repair","v","修理","🔧"],["repeat","v","重複","🔁"],["restaurant","n","餐館","🍽️"],["rich","adj","有錢的","💰"],["Richard","n","理查（人名）","👦"],["right","adj","正確的；右邊的","✅"],["right","n","右邊","➡️"],["ring","n","戒指","💍"],["Robert","n","羅伯特（人名）","👦"],["rock music","n","搖滾音樂","🎸"],["rocket","n","火箭","🚀"],["rucksack","n","背包","🎒"],
+["salt","n","鹽","🧂"],["same","adj","相同的","🟰"],["Sarah","n","莎拉（人名）","👧"],["save","v","挽救；儲存","💾"],["science","n","科學","🔬"],["scissors","n","剪刀","✂️"],["score","n","得分","🏆"],["screen","n","螢幕","📺"],["search","n/v","搜查","🔍"],["secret","n","秘密","🤫"],["sell","v","賣","🏷️"],["September","n","九月","📅"],["several","adj","各自的；幾個的","🔢"],["shampoo","n","洗髮精","🧴"],["shelf","n","架子","📚"],["should","v","應該","👆"],["silver","adj/n","銀色的；銀色","🥈"],["since","prep","自從…；從…以來","⏳"],["singer","n","歌手","🎤"],["ski","n/v","滑雪板；滑雪","🎿"],["skyscraper","n","摩天大樓","🏙️"],["sledge","n/v","雪橇；乘雪橇","🛷"],["smell","n/v","氣味；聞到","👃"],["snack","n","點心","🍿"],["snowball","n","雪球","⚪"],["snowboard","n","滑雪板","🏂"],["snowboarding","n","單板滑雪（運動）","🏂"],["snowman","n","雪人","⛄"],["so","adv/conj","很；非常；如此","💯"],["soap","n","肥皂","🧼"],["soft","adj","柔軟的","☁️"],["somewhere","adv","在某處","📍"],["soon","adv","不久；很快","⏰"],["Sophia","n","蘇菲亞（人名）","👧"],["sore","adj","疼痛的","😣"],["sound","n/v","聲音；發聲","🔊"],["south","n","南方","🧭"],["space","n","空間；太空","🌌"],["spaceship","n","太空船","🛸"],["speak","v","說","🗣️"],["special","adj","特別的","⭐"],["spend","v","花費；用","💸"],["spoon","n","湯匙","🥄"],["spot","n","點；斑點","🔵"],["spotted","adj","有斑點的","🐆"],["spring","n","春天","🌸"],["stadium","n","體育場","🏟️"],["stage","n","舞台；階段","🎭"],["stamp","n","郵票","📮"],["stay","v","留下；停留","🏠"],["step","n","步驟；台階；腳步","👣"],["still","adv","仍然","⏸️"],["stone","n","石頭","🪨"],["storm","n","暴風雨","⛈️"],["straight on","adv","直走","⬆️"],["strange","adj","奇怪的","🤨"],["strawberry","n","草莓","🍓"],["stream","n","小河；溪流","🏞️"],["stripe","n","條紋","🦓"],["striped","adj","有條紋的","🦓"],["student","n","學生","👨‍🎓"],["study","v","學習","📚"],["subject","n","主題；學科","📖"],["such","det","如此；這麼","👉"],["suddenly","adv","突然","⚡"],["sugar","n","糖","🍬"],["suitcase","n","小型旅行箱","🧳"],["summer","n","夏天","☀️"],["sunglasses","n","太陽眼鏡","🕶️"],["sure","adj","確定的","✅"],["surname","n","姓","🏷️"],["surprise","n","驚訝","😲"],["swan","n","天鵝","🦢"],["swing","n/v","鞦韆；搖擺","🛝"],
+["take","v","花費（時間）","⏱️"],["taste","n/v","味道；嚐","👅"],["taxi","n","計程車","🚕"],["team","n","隊；組；班","👥"],["telephone","n","電話","☎️"],["tent","n","帳篷","⛺"],["thank","v","感謝","🙏"],["theatre","n","劇院","🎭"],["thousand","n","千","🔢"],["through","prep","通過；穿越","➡️"],["tidy","adj/v","整齊的；整理","🧹"],["time","n","時間","⏰"],["timetable","n","時刻表","📋"],["toe","n","腳趾","🦶"],["together","adv","一起","🤝"],["tomorrow","adv/n","明天","🌅"],["tonight","adv/n","（在）今晚","🌙"],["torch","n","手電筒（英式）","🔦"],["tortoise","n","陸龜","🐢"],["touch","v","觸摸","👆"],["tour","n","參觀","🚌"],["traffic","n","交通流量","🚦"],["trainers","n","運動鞋","👟"],["tune","n","曲調；曲子；旋律","🎵"],["turn","v","轉動；翻動","🔄"],["turn off","v","關掉","🔌"],["turn on","v","打開","💡"],["twice","adv","兩次","2️⃣"],["tyre","n","輪胎","🛞"],
+["umbrella","n","雨傘","☂️"],["unfriendly","adj","不友好的","😠"],["unhappy","adj","不高興的","😢"],["uniform","n","制服","👔"],["university","n","大學","🎓"],["unkind","adj","不友善的","😾"],["untidy","adj","不整潔的","🌀"],["until","prep","直到…時","⏳"],["unusual","adj","不同尋常的","🦄"],["use","v","使用","🔧"],["usually","adv","通常地","🔁"],
+["view","n","觀點；景象","🏞️"],["violin","n","小提琴","🎻"],["visit","v","參觀","🏛️"],["volleyball","n","排球","🏐"],
+["waiter","n","男服務員","🤵"],["warm","adj","溫暖的","🌡️"],["way","n","道路","🛣️"],["west","n","西方","🧭"],["wheel","n","輪子","🛞"],["while","conj","在…的時候","⏳"],["whisper","v","小聲說話","🤫"],["whistle","v","吹口哨","😗"],["wife","n","妻子","👰"],["wifi","n","無線寬頻連線","📶"],["wild","adj","野生的","🦁"],["will","v","將要","🔮"],["William","n","威廉（人名）","👦"],["win","n/v","贏","🏆"],["wing","n","翅膀","🪽"],["winner","n","獲勝者","🥇"],["winter","n","冬天","❄️"],["wish","n/v","希望","🌠"],["without","prep","沒有","🚫"],["wonderful","adj","極好的","🤩"],["wood","n","木材","🪵"],["wool","n","羊毛","🐑"],["worried","adj","擔心的","😟"],
+["x-ray","n","X 光","🩻"],
+["yet","adv","仍然；還","⏳"],["yoghurt","n","優格","🥛"],["you're welcome!","excl","別客氣","😊"],
+["zero","n","零","0️⃣"],["twenty-first","","第二十一","21️⃣"],["twenty-second","","第二十二","22️⃣"],["twenty-third","","第二十三","23️⃣"],["twenty-fourth","","第二十四","24️⃣"],["twenty-fifth","","第二十五","25️⃣"],["twenty-sixth","","第二十六","26️⃣"],["twenty-seventh","","第二十七","27️⃣"],["twenty-eighth","","第二十八","28️⃣"],["twenty-ninth","","第二十九","29️⃣"],["thirtieth","","第三十","30️⃣"],["thirty-first","","第三十一","31️⃣"]
+];
+
+const SENTENCES = [
+["a.m.","I get up at seven a.m. every day.","我每天早上七點起床。"],
+["across","We walked across the bridge to the park.","我們走過橋到公園。"],
+["act","The children act in a school play.","孩子們在學校話劇中表演。"],
+["actor","The actor wore a funny costume on stage.","那位演員在舞台上穿著滑稽的服裝。"],
+["actually","I actually like rainy days very much.","其實我非常喜歡下雨天。"],
+["adventure","The story is about an adventure in space.","這個故事是關於太空冒險的。"],
+["after","We play football after school on Mondays.","我們星期一放學後踢足球。"],
+["ago","Dinosaurs lived here millions of years ago.","恐龍在數百萬年前住在這裡。"],
+["agree","I agree with you; that film was great.","我同意你，那部電影很棒。"],
+["air","Open the window and let in some fresh air.","打開窗戶讓新鮮空氣進來。"],
+["airport","We went to the airport to meet Grandma.","我們去機場接奶奶。"],
+["alone","The little kitten sat alone under the tree.","小貓獨自坐在樹下。"],
+["already","I have already finished my homework today.","我今天已經做完功課了。"],
+["also","My sister also likes chocolate ice cream.","我妹妹也喜歡巧克力冰淇淋。"],
+["amazing","The fireworks show last night was amazing.","昨晚的煙火表演太驚人了。"],
+["ambulance","The ambulance took the sick man to hospital.","救護車把生病的男士送到醫院。"],
+["anyone","Did anyone see my blue pencil case?","有人看到我的藍色鉛筆盒嗎？"],
+["anything","I cannot find anything in this messy room.","我在這個亂糟糟的房間裡什麼都找不到。"],
+["anywhere","You can sit anywhere you like.","你想坐哪裡都可以。"],
+["appear","Stars appear in the sky at night.","星星在夜晚出現在天空中。"],
+["April","My birthday is in April.","我的生日在四月。"],
+["arrive","Our train will arrive at six o'clock.","我們的火車將在六點鐘到達。"],
+["art","We paint pictures in our art class.","我們在美術課上畫畫。"],
+["artist","The artist painted a picture of the sea.","那位藝術家畫了一幅海的畫。"],
+["as","He runs as fast as his big brother.","他跑得和他哥哥一樣快。"],
+["as ... as","My bag is as heavy as yours.","我的書包和你的一樣重。"],
+["astronaut","The astronaut flew to the space station.","太空人飛往太空站。"],
+["at the moment","Mum is cooking dinner at the moment.","媽媽此刻正在煮晚餐。"],
+["August","We go on holiday in August.","我們在八月去度假。"],
+["autumn","The leaves turn yellow in autumn.","秋天樹葉變黃。"],
+["away","The bird flew away from its cage.","小鳥從籠子裡飛走了。"],
+["backpack","She carries her books in a red backpack.","她用紅色背包裝書。"],
+["bandage","The nurse put a bandage on my knee.","護士在我的膝蓋上包了繃帶。"],
+["bank","Dad keeps his money in the bank.","爸爸把錢存在銀行裡。"],
+["beetle","A green beetle was sitting on the leaf.","一隻綠色甲蟲停在葉子上。"],
+["before","Wash your hands before you eat dinner.","吃晚餐前先洗手。"],
+["begin","The film will begin at eight o'clock.","電影將在八點鐘開始。"],
+["believe","I believe that she is telling the truth.","我相信她說的是實話。"],
+["belt","He wore a black belt with his jeans.","他牛仔褲配了一條黑皮帶。"],
+["Betty","Betty likes to read stories before bed.","貝蒂喜歡睡前讀故事。"],
+["bicycle","Tom rides his bicycle to school every day.","湯姆每天騎腳踏車上學。"],
+["bin","Put the rubbish in the bin, please.","請把垃圾丟進垃圾桶。"],
+["biscuit","I had a biscuit with my milk.","我配著牛奶吃了一塊餅乾。"],
+["bit","Can I have a bit of your cake?","我可以吃一小塊你的蛋糕嗎？"],
+["bored","I felt bored on the long bus ride.","搭長途公車時我覺得很無聊。"],
+["borrow","May I borrow your red pen, please?","我可以借你的紅筆嗎？"],
+["bracelet","Grandma gave me a silver bracelet.","奶奶送給我一條銀手鐲。"],
+["break","Be careful, do not break the glass.","小心，別打破玻璃杯。"],
+["bridge","The old bridge crosses the wide river.","那座舊橋橫跨寬寬的河。"],
+["broken","My toy car is broken and needs fixing.","我的玩具車壞了，需要修理。"],
+["brush","I brush my hair every morning.","我每天早上梳頭髮。"],
+["burn","Do not touch the fire; it can burn you.","不要碰火，它會燙傷你。"],
+["business","Her father has a small business in town.","她爸爸在鎮上有個小生意。"],
+["businessman/woman","The businessman works in a tall office building.","那位商人在一棟高樓裡工作。"],
+["butter","I put butter and jam on my bread.","我在麵包上塗奶油和果醬。"],
+["butterfly","A yellow butterfly landed on the flower.","一隻黃蝴蝶停在花朵上。"],
+["by myself","I made this cake all by myself.","這個蛋糕完全是我自己做的。"],
+["by yourself","Can you tie your shoes by yourself?","你會自己綁鞋帶嗎？"],
+["calendar","I marked the trip on our kitchen calendar.","我在廚房的日曆上標記了旅行日期。"],
+["camel","A camel can walk for days in the desert.","駱駝可以在沙漠裡走好幾天。"],
+["camp","We camp by the lake every summer.","我們每年夏天在湖邊露營。"],
+["card","She sent me a birthday card from London.","她從倫敦寄給我一張生日卡。"],
+["cartoon","My little brother watches cartoons on Saturdays.","我弟弟星期六看卡通。"],
+["castle","The king lived in a big old castle.","國王住在一座又大又老的城堡裡。"],
+["cave","The bear sleeps in a dark cave.","熊睡在黑暗的洞穴裡。"],
+["century","This church is more than a century old.","這座教堂已經有一百多年的歷史。"],
+["cereal","I eat cereal with milk for breakfast.","我早餐吃麥片配牛奶。"],
+["channel","Which channel is the football match on?","足球比賽在哪個頻道播出？"],
+["chat","I chat with my friends at break time.","下課時間我和朋友們聊天。"],
+["cheap","These pencils are cheap but very good.","這些鉛筆便宜但很好用。"],
+["chemist's","Mum bought some medicine at the chemist's.","媽媽在藥局買了一些藥。"],
+["chess","Grandpa taught me how to play chess.","爺爺教我下西洋棋。"],
+["chopsticks","We eat noodles with chopsticks.","我們用筷子吃麵條。"],
+["club","She joined the school music club.","她加入了學校的音樂社。"],
+["collect","I collect stamps from many countries.","我收集許多國家的郵票。"],
+["college","My cousin studies history at college.","我表哥在大學讀歷史。"],
+["comb","Use a comb to tidy your hair.","用梳子把頭髮梳整齊。"],
+["competition","Our team won the singing competition.","我們的隊伍贏得了歌唱比賽。"],
+["concert","We went to a pop concert last night.","我們昨晚去聽了流行音樂會。"],
+["conversation","I had a long conversation with my teacher.","我和老師談了很久。"],
+["cooker","Dad is cooking soup on the cooker.","爸爸正在爐子上煮湯。"],
+["cookie","The cookie jar is on the top shelf.","餅乾罐在最上層的架子上。"],
+["corner","The shop is on the corner of the street.","商店在街道的轉角處。"],
+["costume","She wore a witch costume to the party.","她穿著女巫服裝去參加派對。"],
+["could","When I was five, I could swim well.","我五歲的時候就游得很好了。"],
+["creature","A strange creature lives in this story.","這個故事裡住著一種奇怪的生物。"],
+["crown","The queen wears a golden crown.","王后戴著金色的王冠。"],
+["cushion","The cat sleeps on the soft cushion.","貓睡在柔軟的墊子上。"],
+["cut","Be careful when you cut the paper.","剪紙的時候要小心。"],
+["cycle","We cycle to the park on Sundays.","我們星期日騎自行車去公園。"],
+["dark","It gets dark early in winter.","冬天天黑得早。"],
+["date","What is the date of your birthday party?","你的生日派對是幾月幾號？"],
+["David","David plays football for the school team.","大衛是學校足球隊的隊員。"],
+["dear","She began her letter with Dear Grandma.","她用「親愛的奶奶」開始寫信。"],
+["December","Christmas comes in December.","聖誕節在十二月。"],
+["decide","I cannot decide which shirt to buy.","我無法決定要買哪件襯衫。"],
+["deep","The lake is very deep in the middle.","湖的中央很深。"],
+["delicious","This apple pie smells delicious.","這個蘋果派聞起來很美味。"],
+["desert","Camels live in the hot dry desert.","駱駝住在炎熱乾燥的沙漠裡。"],
+["design","She wants to design her own dress.","她想自己設計一件洋裝。"],
+["designer","The designer drew a picture of the new shoe.","設計師畫了新鞋的圖。"],
+["diary","I write in my diary every night.","我每天晚上寫日記。"],
+["dictionary","Look up the word in your dictionary.","在字典裡查這個單字。"],
+["dinosaur","The dinosaur skeleton is in the museum.","恐龍骨架在博物館裡。"],
+["disappear","The magician made the rabbit disappear.","魔術師把兔子變不見了。"],
+["drum","He plays the drum in the school band.","他在學校樂隊裡打鼓。"],
+["during","I read books during the summer holiday.","我在暑假期間讀書。"],
+["each","Each child got a small gift.","每個孩子都得到了一份小禮物。"],
+["eagle","The eagle has very large strong wings.","老鷹有又大又有力的翅膀。"],
+["early","We arrived early for the school play.","我們提早到達看學校話劇。"],
+["Earth","The Earth goes around the sun.","地球繞著太陽轉。"],
+["east","The sun rises in the east.","太陽從東方升起。"],
+["elbow","He hurt his elbow playing basketball.","他打籃球時傷到了手肘。"],
+["else","Would you like anything else to drink?","你還想喝點別的嗎？"],
+["Emma","Emma has a new puppy called Max.","艾瑪有一隻名叫麥克斯的小狗。"],
+["empty","The glass is empty; may I have more juice?","杯子空了，可以再給我一些果汁嗎？"],
+["end","The film will end at nine o'clock.","電影將在九點鐘結束。"],
+["engine","The engine of the car is very loud.","這輛車的引擎聲音很大。"],
+["engineer","The engineer fixed the broken train.","工程師修好了故障的火車。"],
+["enormous","The elephant is an enormous animal.","大象是一種巨大的動物。"],
+["enough","Do we have enough bread for everyone?","我們的麵包夠每個人吃嗎？"],
+["enter","Ten students will enter the art competition.","十名學生將參加美術比賽。"],
+["entrance","Wait for me at the entrance of the museum.","在博物館的入口等我。"],
+["envelope","Put the letter in the envelope, please.","請把信放進信封裡。"],
+["environment","We must take care of our environment.","我們必須愛護我們的環境。"],
+["ever","Have you ever seen a real lion?","你曾經看過真正的獅子嗎？"],
+["everywhere","There were flowers everywhere in the garden.","花園裡到處都是花。"],
+["excellent","You did an excellent job on your project.","你的專題做得非常棒。"],
+["excited","The children are excited about the trip.","孩子們對這次旅行感到很興奮。"],
+["exit","The exit is at the back of the cinema.","出口在電影院的後面。"],
+["expensive","This watch is too expensive for me.","這隻手錶對我來說太貴了。"],
+["explain","Can you explain this maths problem to me?","你可以跟我解釋這道數學題嗎？"],
+["explore","We love to explore the forest near our house.","我們喜歡探索家附近的森林。"],
+["extinct","Dinosaurs became extinct long ago.","恐龍很久以前就滅絕了。"],
+["factory","My uncle works in a chocolate factory.","我叔叔在巧克力工廠工作。"],
+["fall","In fall, the leaves turn red and gold.","秋天時，樹葉變成紅色和金色。"],
+["fall over","The baby fell over but did not cry.","小寶寶跌倒了但沒有哭。"],
+["far","How far is it from here to the beach?","從這裡到海邊有多遠？"],
+["fast","The cheetah is a very fast animal.","獵豹是跑得很快的動物。"],
+["February","February is the shortest month of the year.","二月是一年中最短的月份。"],
+["feel","I feel happy when I play with my dog.","我和小狗玩的時候感到很快樂。"],
+["festival","The music festival is in July this year.","音樂節今年在七月舉行。"],
+["fetch","The dog ran to fetch the ball.","狗跑去把球撿回來。"],
+["a few","I have a few good friends at school.","我在學校有幾個好朋友。"],
+["file","Save your work in a new file.","把你的作業存在一個新檔案裡。"],
+["find out","We must find out who took the cake.","我們必須查出是誰拿走了蛋糕。"],
+["finger","She wears a ring on her finger.","她手指上戴著戒指。"],
+["finish","Finish your vegetables before you have dessert.","吃完蔬菜才能吃甜點。"],
+["fire","We sat by the warm fire and sang.","我們坐在溫暖的火堆旁唱歌。"],
+["fire engine","The fire engine raced down the street.","消防車在街道上疾馳。"],
+["fire fighter","The fire fighter saved the cat from the tree.","消防員把貓從樹上救了下來。"],
+["fire station","We visited the fire station with our class.","我們全班參觀了消防局。"],
+["flag","Every country has its own flag.","每個國家都有自己的國旗。"],
+["flashlight","Take a flashlight when you go camping.","去露營時帶一支手電筒。"],
+["flour","We need flour and eggs to make a cake.","我們需要麵粉和雞蛋來做蛋糕。"],
+["fog","The fog was thick on the road this morning.","今天早上路上的霧很濃。"],
+["foggy","It was a cold and foggy morning.","那是一個寒冷又多霧的早晨。"],
+["follow","Follow me and I will show you the way.","跟我來，我帶你走。"],
+["for","We waited for the bus for twenty minutes.","我們等公車等了二十分鐘。"],
+["forget","Do not forget your umbrella today.","今天別忘了帶雨傘。"],
+["fork","We eat with a knife and fork.","我們用刀叉吃飯。"],
+["Frank","Frank is learning to play the guitar.","法蘭克正在學彈吉他。"],
+["fridge","The milk is in the fridge.","牛奶在冰箱裡。"],
+["friendly","The people in this village are very friendly.","這個村莊的人非常友善。"],
+["frightening","The thunder last night was quite frightening.","昨晚的雷聲相當嚇人。"],
+["front","The garden is in front of our house.","花園在我們房子的前面。"],
+["full","The bus was full of people this morning.","今天早上公車上擠滿了人。"],
+["fur","The rabbit has soft white fur.","兔子有柔軟的白色毛皮。"],
+["furry","I love my furry little hamster.","我愛我那毛茸茸的小倉鼠。"],
+["future","In the future, I want to be a doctor.","未來我想當醫生。"],
+["gate","Please close the gate of the garden.","請關上花園的大門。"],
+["geography","We learn about rivers in geography class.","我們在地理課上學習河流。"],
+["George","George is my best friend at school.","喬治是我在學校最好的朋友。"],
+["get to","I get to school at eight o'clock.","我八點鐘到學校。"],
+["glass","The window is made of glass.","窗戶是玻璃做的。"],
+["glove","I lost one glove on the way home.","我在回家的路上丟了一隻手套。"],
+["glue","Use some glue to stick the paper.","用一些膠水把紙黏起來。"],
+["go away!","Go away! I am trying to sleep.","走開！我想睡覺。"],
+["go out","We go out for dinner on Fridays.","我們星期五出去吃晚餐。"],
+["gold","She won a gold medal in the race.","她在比賽中贏得了金牌。"],
+["golf","My grandpa plays golf every weekend.","我爺爺每個週末打高爾夫球。"],
+["group","Work in a group of four, please.","請四人一組進行活動。"],
+["guess","Can you guess how old my sister is?","你猜得出我妹妹幾歲嗎？"],
+["gym","We play basketball in the school gym.","我們在學校體育館打籃球。"],
+["half","I ate half of the pizza by myself.","我自己吃掉了半個披薩。"],
+["happen","What will happen next in the story?","這個故事接下來會發生什麼事？"],
+["hard","This maths question is too hard for me.","這道數學題對我來說太難了。"],
+["Harry","Harry has a pet rabbit called Snow.","哈利有一隻名叫雪雪的寵物兔。"],
+["hate","I hate getting up early on Mondays.","我討厭星期一早起。"],
+["hear","Can you hear the birds singing outside?","你聽得到外面鳥兒在唱歌嗎？"],
+["heavy","This box is too heavy for me to carry.","這個箱子太重了，我搬不動。"],
+["Helen","Helen likes to swim in the sea.","海倫喜歡在海裡游泳。"],
+["high","The mountain is very high and white.","那座山很高，山頂白雪皚皚。"],
+["hill","We climbed to the top of the hill.","我們爬到了山頂。"],
+["history","I like learning about kings in history.","我喜歡在歷史課上學習國王的故事。"],
+["hole","The rabbit ran down a hole in the ground.","兔子跑進了地上的洞裡。"],
+["Holly","Holly writes stories about dragons.","荷莉寫關於龍的故事。"],
+["honey","I like honey on my morning toast.","我喜歡早餐吐司上塗蜂蜜。"],
+["hope","I hope it will be sunny tomorrow.","我希望明天會是晴天。"],
+["horrible","The weather was horrible all weekend.","整個週末的天氣都很糟糕。"],
+["hotel","We stayed in a hotel near the beach.","我們住在海邊的一家旅館。"],
+["hour","The film lasts for two hours.","這部電影長達兩個小時。"],
+["how long","How long does it take to walk home?","走路回家要多久？"],
+["hurry","Hurry up or we will miss the train.","快一點，不然我們會趕不上火車。"],
+["husband","Her husband works as a pilot.","她的丈夫是一名飛行員。"],
+["if","If it rains, we will stay at home.","如果下雨，我們就待在家裡。"],
+["if you want!","You can have my pen if you want!","如果你要，我的筆可以給你！"],
+["important","It is important to drink enough water.","喝足夠的水很重要。"],
+["improve","I want to improve my English this year.","今年我想提升我的英文。"],
+["in a minute!","Dinner will be ready in a minute!","晚餐馬上就好了！"],
+["information","You can find more information on this website.","你可以在這個網站上找到更多資訊。"],
+["insect","A butterfly is a beautiful insect.","蝴蝶是一種美麗的昆蟲。"],
+["instead","I wanted tea, but I drank milk instead.","我想喝茶，但改喝了牛奶。"],
+["instrument","The violin is my favourite musical instrument.","小提琴是我最喜歡的樂器。"],
+["interested","I am interested in learning about space.","我對學習太空知識很感興趣。"],
+["interesting","This book is really interesting and funny.","這本書真的又有趣又好笑。"],
+["invent","Who will invent a flying bicycle one day?","有一天誰會發明會飛的自行車呢？"],
+["invitation","I got an invitation to Lucy's party.","我收到了露西派對的邀請函。"],
+["jam","I like strawberry jam on my toast.","我喜歡在吐司上塗草莓果醬。"],
+["January","The new year begins in January.","新的一年從一月開始。"],
+["job","My mum has a new job in a hospital.","我媽媽在醫院有了一份新工作。"],
+["join","Will you join our football team this year?","你今年要加入我們的足球隊嗎？"],
+["journalist","The journalist writes for the city newspaper.","那位記者為城市報紙撰稿。"],
+["journey","The journey to the mountains took six hours.","到山裡的旅程花了六個小時。"],
+["July","School finishes at the end of July.","學校在七月底放假。"],
+["June","My brother was born in June.","我哥哥在六月出生。"],
+["just","I have just finished eating my lunch.","我剛剛吃完午餐。"],
+["Katy","Katy goes to dance class on Tuesdays.","凱蒂每星期二去上舞蹈課。"],
+["keep","You can keep the book until Friday.","這本書你可以借到星期五。"],
+["key","I keep my house key in my bag.","我把家裡的鑰匙放在書包裡。"],
+["kilometre","We walked five kilometres to the lake.","我們走了五公里到湖邊。"],
+["kind","Our new teacher is very kind to us.","我們的新老師對我們很親切。"],
+["king","The king lived in a castle by the sea.","國王住在海邊的城堡裡。"],
+["knee","I fell and hurt my knee yesterday.","我昨天跌倒傷到了膝蓋。"],
+["knife","Cut the apple with a small knife.","用小刀切蘋果。"],
+["land","Our plane will land in London soon.","我們的飛機很快就要在倫敦降落了。"],
+["language","English is a useful language to learn.","英語是一門很有用的語言。"],
+["large","An elephant has two large ears.","大象有兩隻大耳朵。"],
+["late","Do not be late for school again.","上學別再遲到了。"],
+["later","I will do my homework later this evening.","我今天晚一點再做功課。"],
+["lazy","The lazy cat sleeps all day long.","那隻懶貓整天睡覺。"],
+["leave","We leave home at eight every morning.","我們每天早上八點出門。"],
+["left","Turn left at the end of this road.","在這條路的盡頭向左轉。"],
+["let","Mum will let me stay up late tonight.","媽媽今晚會讓我晚點睡。"],
+["letter","I wrote a letter to my pen friend.","我寫了一封信給我的筆友。"],
+["lie down","I want to lie down and rest now.","我現在想躺下來休息。"],
+["lift","Take the lift to the fifth floor.","搭電梯到五樓。"],
+["lift","Can you help me lift this heavy box?","你能幫我抬起這個重箱子嗎？"],
+["light","This bag is very light and easy to carry.","這個袋子很輕，很好拿。"],
+["a little","I speak a little French.","我會說一點法語。"],
+["London","London is the capital of England.","倫敦是英格蘭的首都。"],
+["look after","I look after my little brother after school.","放學後我照顧我弟弟。"],
+["look like","You look like your mother.","你看起來很像你媽媽。"],
+["lovely","What a lovely day for a picnic!","真是個適合野餐的好天氣！"],
+["low","The plane flew low over the houses.","飛機在房屋上空低飛。"],
+["lucky","I was lucky to find my lost watch.","我很幸運找到了丟失的手錶。"],
+["magazine","Mum buys a cooking magazine every month.","媽媽每個月買一本烹飪雜誌。"],
+["make sure","Make sure you lock the door tonight.","今晚一定要記得鎖門。"],
+["manager","The manager works in a big office.","經理在一間大辦公室裡工作。"],
+["March","Spring begins in March.","春天從三月開始。"],
+["married","My aunt got married last summer.","我阿姨去年夏天結婚了。"],
+["match","Our school team won the football match.","我們校隊贏了那場足球比賽。"],
+["maths","Maths is my favourite subject at school.","數學是我在學校最喜歡的科目。"],
+["May","The flowers open in May.","花兒在五月開放。"],
+["may","It may rain later this afternoon.","今天下午晚些時候可能會下雨。"],
+["meal","We had a big meal with our family.","我們和家人吃了一頓豐盛的大餐。"],
+["mechanic","The mechanic is fixing our blue car.","技工正在修理我們的藍色汽車。"],
+["medicine","Take this medicine three times a day.","這種藥一天吃三次。"],
+["meet","Let us meet at the park after lunch.","我們午餐後在公園碰面吧。"],
+["meeting","Dad has an important meeting today.","爸爸今天有一個重要的會議。"],
+["member","She is a member of the chess club.","她是西洋棋社的社員。"],
+["metal","The bridge is made of strong metal.","這座橋是用堅固的金屬建造的。"],
+["Michael","Michael plays the piano very well.","麥可鋼琴彈得很好。"],
+["midday","The sun is highest at midday.","正午時太陽最高。"],
+["middle","There is a tree in the middle of the garden.","花園中央有一棵樹。"],
+["midnight","The party ended at midnight.","派對在半夜十二點結束。"],
+["might","We might go swimming this weekend.","這個週末我們可能會去游泳。"],
+["million","A million people live in this city.","這個城市住著一百萬人。"],
+["mind","Do you mind if I open the window?","你介意我打開窗戶嗎？"],
+["minute","Wait a minute; I am nearly ready.","等一下，我快好了。"],
+["missing","One of my socks is missing again.","我的一隻襪子又不見了。"],
+["mix","Mix the flour and the sugar together.","把麵粉和糖混合在一起。"],
+["money","I save my pocket money every week.","我每週存下零用錢。"],
+["month","There are twelve months in a year.","一年有十二個月。"],
+["motorway","We drove on the motorway to the city.","我們開車走高速公路進城。"],
+["much","Thank you very much for your help.","非常感謝你的幫忙。"],
+["museum","We saw dinosaur bones at the museum.","我們在博物館看到了恐龍骨頭。"],
+["necklace","She wore a beautiful pearl necklace.","她戴著一條漂亮的珍珠項鍊。"],
+["nest","The bird built a nest in our tree.","那隻鳥在我們的樹上築了巢。"],
+["news","I watched the news on TV last night.","我昨晚在電視上看了新聞。"],
+["newspaper","Grandpa reads the newspaper every morning.","爺爺每天早上看報紙。"],
+["next","The next bus comes in ten minutes.","下一班公車十分鐘後到。"],
+["no problem!","Can you help me? No problem!","你能幫我嗎？沒問題！"],
+["noisy","The classroom was very noisy at lunch.","午餐時間教室裡非常吵鬧。"],
+["no-one","No-one was at home when I called.","我打電話時沒有人在家。"],
+["north","It is much colder in the north.","北方冷得多。"],
+["November","November comes before December.","十一月在十二月之前。"],
+["nowhere","My keys are nowhere to be found.","我的鑰匙到處都找不到。"],
+["ocean","Whales live deep in the ocean.","鯨魚住在海洋深處。"],
+["October","We pick apples in October.","我們在十月摘蘋果。"],
+["octopus","An octopus has eight long arms.","章魚有八隻長長的觸手。"],
+["of course","Can I come too? Of course you can!","我也可以來嗎？當然可以！"],
+["office","My dad works in an office in the city.","我爸爸在城裡的一間辦公室工作。"],
+["Oliver","Oliver collects old coins from many countries.","奧利佛收集許多國家的舊硬幣。"],
+["olives","I do not like olives on my pizza.","我不喜歡披薩上放橄欖。"],
+["once","I have only been to Paris once.","我只去過巴黎一次。"],
+["online","I play games online with my friends.","我和朋友在線上玩遊戲。"],
+["other","Put your other shoe on quickly.","快把你的另一隻鞋穿上。"],
+["oven","The bread is baking in the hot oven.","麵包正在熱烤箱裡烤著。"],
+["over","A bird flew over our heads.","一隻鳥從我們頭頂飛過。"],
+["p.m.","School finishes at four p.m. every day.","學校每天下午四點放學。"],
+["pajamas","I put on my pajamas before bed.","睡前我換上睡衣。"],
+["passenger","Each passenger needs a ticket for the train.","每位乘客都需要一張火車票。"],
+["past","It is half past seven in the evening.","現在是晚上七點半。"],
+["path","Follow the path through the forest.","沿著小徑穿過森林。"],
+["pepper","Do you want pepper on your eggs?","你的蛋要加胡椒嗎？"],
+["perhaps","Perhaps we can go to the zoo tomorrow.","也許我們明天可以去動物園。"],
+["photographer","The photographer took pictures at the wedding.","攝影師在婚禮上拍照。"],
+["piece","Would you like a piece of cake?","你想來一塊蛋糕嗎？"],
+["pilot","The pilot flew the plane to Spain.","飛行員駕駛飛機飛往西班牙。"],
+["pizza","We had pizza for dinner on Friday.","我們星期五晚餐吃了披薩。"],
+["planet","Mars is called the red planet.","火星被稱為紅色星球。"],
+["plastic","The toy is made of red plastic.","這個玩具是紅色塑膠做的。"],
+["platform","The train leaves from platform three.","火車從三號月台開出。"],
+["pleased","I am very pleased with my exam results.","我對自己的考試成績很滿意。"],
+["pocket","There is a hole in my jacket pocket.","我外套的口袋破了個洞。"],
+["police officer","The police officer helped us cross the road.","警察幫我們過馬路。"],
+["police station","The police station is next to the bank.","警察局在銀行旁邊。"],
+["pond","Ducks are swimming on the pond.","鴨子在池塘裡游泳。"],
+["poor","The poor dog had no home or food.","那隻可憐的狗沒有家也沒有食物。"],
+["pop music","My sister loves listening to pop music.","我妹妹喜歡聽流行音樂。"],
+["popular","Football is very popular in our school.","足球在我們學校很受歡迎。"],
+["post","I will post this letter tomorrow morning.","我明天早上會去寄這封信。"],
+["post office","The post office is opposite the supermarket.","郵局在超市對面。"],
+["postcard","She sent me a postcard from Spain.","她從西班牙寄給我一張明信片。"],
+["prefer","I prefer apples to bananas.","比起香蕉，我更喜歡蘋果。"],
+["prepare","We must prepare for the school concert.","我們必須為學校音樂會做準備。"],
+["prize","She won first prize in the drawing competition.","她在繪畫比賽中贏得了第一名。"],
+["problem","Can you help me with this problem?","你能幫我解決這個問題嗎？"],
+["programme","My favourite programme is on TV tonight.","我最喜歡的節目今晚在電視播出。"],
+["project","Our class project is about wild animals.","我們班的專題是關於野生動物。"],
+["pull","Pull the door to open it.","把門拉開。"],
+["push","Push the button and the door opens.","按下按鈕，門就會開。"],
+["puzzle","We finished the puzzle in one hour.","我們一小時內就完成了拼圖。"],
+["pyjamas","My new pyjamas have stars on them.","我的新睡衣上面有星星圖案。"],
+["pyramid","The pyramids in Egypt are very old.","埃及的金字塔非常古老。"],
+["quarter","It is a quarter past nine now.","現在是九點十五分。"],
+["queen","The queen lives in a beautiful palace.","王后住在一座美麗的宮殿裡。"],
+["quite","The test was quite easy for me.","這次考試對我來說相當簡單。"],
+["quiz","We had a fun quiz in class today.","我們今天在課堂上做了有趣的小測驗。"],
+["race","Tom won the running race at school.","湯姆在學校贏得了跑步比賽。"],
+["racing","Racing cars are very fast and loud.","賽車又快又吵。"],
+["railway","The new railway goes to the airport.","新鐵路通往機場。"],
+["ready","Are you ready to go to school?","你準備好去上學了嗎？"],
+["remember","I always remember my best friend's birthday.","我總是記得我最好朋友的生日。"],
+["repair","Dad will repair my broken bicycle.","爸爸會修理我壞掉的腳踏車。"],
+["repeat","Can you repeat that question, please?","請你再說一次那個問題好嗎？"],
+["restaurant","We ate dinner at a Chinese restaurant.","我們在一家中式餐廳吃了晚餐。"],
+["rich","The king in the story was very rich.","故事裡的國王非常富有。"],
+["Richard","Richard is learning to play the drums.","理查正在學打鼓。"],
+["right","Turn right at the traffic lights.","在紅綠燈處向右轉。"],
+["right","Your answer is right; well done!","你的答案是對的，做得好！"],
+["ring","Grandma wears a gold ring on her finger.","奶奶手指上戴著金戒指。"],
+["Robert","Robert rides his bike to school.","羅伯特騎自行車上學。"],
+["rock music","My dad likes listening to rock music.","我爸爸喜歡聽搖滾樂。"],
+["rocket","The rocket flew high into the sky.","火箭高高地飛上天空。"],
+["rucksack","She packed her lunch in her rucksack.","她把午餐裝進了背包。"],
+["salt","Pass me the salt, please.","請把鹽遞給我。"],
+["same","We go to the same school.","我們上同一所學校。"],
+["Sarah","Sarah has two cats and a dog.","莎拉養了兩隻貓和一隻狗。"],
+["save","I want to save money for a new bike.","我想存錢買一輛新腳踏車。"],
+["science","We do experiments in science class.","我們在科學課上做實驗。"],
+["scissors","Be careful with those sharp scissors.","小心那把鋒利的剪刀。"],
+["score","The final score was three to one.","最後比分是三比一。"],
+["screen","Do not sit too close to the screen.","不要坐得離螢幕太近。"],
+["search","We search for shells on the beach.","我們在海灘上找貝殼。"],
+["secret","This is a secret; do not tell anyone.","這是個祕密，別告訴任何人。"],
+["sell","They sell fresh bread in that shop.","那家店賣新鮮麵包。"],
+["September","School starts again in September.","學校在九月開學。"],
+["several","I read several books during the holidays.","假期裡我讀了好幾本書。"],
+["shampoo","I wash my hair with this shampoo.","我用這瓶洗髮精洗頭。"],
+["shelf","Put the book back on the shelf.","把書放回書架上。"],
+["should","You should brush your teeth twice a day.","你應該每天刷兩次牙。"],
+["silver","She won a silver medal in the race.","她在比賽中贏得了銀牌。"],
+["since","I have lived here since I was five.","我從五歲起就住在這裡。"],
+["singer","The singer has a beautiful voice.","那位歌手有美妙的歌聲。"],
+["ski","We ski in the mountains every winter.","我們每年冬天去山上滑雪。"],
+["skyscraper","New York has many tall skyscrapers.","紐約有許多高大的摩天大樓。"],
+["sledge","The children rode the sledge down the hill.","孩子們坐雪橇滑下山。"],
+["smell","These flowers smell wonderful.","這些花聞起來好香。"],
+["snack","I had a small snack after school.","放學後我吃了點小點心。"],
+["snowball","We threw snowballs at each other.","我們互相丟雪球。"],
+["snowboard","He rode his snowboard down the mountain.","他踩著滑雪板滑下山。"],
+["snowboarding","Snowboarding is an exciting winter sport.","單板滑雪是刺激的冬季運動。"],
+["snowman","We built a big snowman in the garden.","我們在花園裡堆了一個大雪人。"],
+["so","It was raining, so we stayed inside.","下雨了，所以我們待在室內。"],
+["soap","Wash your hands with soap and water.","用肥皂和水洗手。"],
+["soft","The kitten's fur is very soft.","小貓的毛非常柔軟。"],
+["somewhere","Let us go somewhere quiet to read.","我們找個安靜的地方看書吧。"],
+["soon","Summer holidays will start soon.","暑假很快就要開始了。"],
+["Sophia","Sophia draws beautiful pictures of animals.","蘇菲亞畫的動物圖很漂亮。"],
+["sore","My throat is sore and it hurts.","我的喉嚨很痛。"],
+["sound","I heard a strange sound in the night.","夜裡我聽到一個奇怪的聲音。"],
+["south","Birds fly south for the winter.","鳥兒冬天飛往南方。"],
+["space","The astronaut travelled into space.","太空人旅行進入了太空。"],
+["spaceship","The spaceship landed on the moon.","太空船降落在月球上。"],
+["speak","Can you speak more slowly, please?","請你說慢一點好嗎？"],
+["special","Today is a special day for our family.","今天對我們家來說是特別的日子。"],
+["spend","I spend an hour reading every night.","我每晚花一小時閱讀。"],
+["spoon","Stir your tea with a spoon.","用湯匙攪拌你的茶。"],
+["spot","There is a red spot on your shirt.","你的襯衫上有一個紅點。"],
+["spotted","We saw a spotted dog in the park.","我們在公園裡看到一隻有斑點的狗。"],
+["spring","Flowers bloom in spring.","花兒在春天綻放。"],
+["stadium","The football match is at the stadium.","足球比賽在體育場舉行。"],
+["stage","The actors stood on the big stage.","演員們站在大舞台上。"],
+["stamp","Put a stamp on the envelope.","在信封上貼一張郵票。"],
+["stay","We will stay at Grandma's house tonight.","今晚我們會住在奶奶家。"],
+["step","Be careful on the top step.","在最上面那級階梯要小心。"],
+["still","It is still raining outside.","外面還在下雨。"],
+["stone","The house is built of grey stone.","這棟房子是用灰色石頭蓋的。"],
+["storm","The storm broke many tree branches.","暴風雨打斷了許多樹枝。"],
+["straight on","Go straight on until you see the bank.","一直往前走，直到你看到銀行。"],
+["strange","I heard a strange noise in the garden.","我在花園裡聽到奇怪的聲音。"],
+["strawberry","I had strawberry ice cream for dessert.","我甜點吃了草莓冰淇淋。"],
+["stream","We crossed a small stream in the woods.","我們在樹林裡渡過一條小溪。"],
+["stripe","The zebra has a black stripe pattern.","斑馬有黑色條紋的圖案。"],
+["striped","She wore a blue and white striped shirt.","她穿著藍白條紋的襯衫。"],
+["student","Every student must bring a pencil.","每個學生都必須帶鉛筆。"],
+["study","I study English every day after school.","我每天放學後學英語。"],
+["subject","History is my favourite school subject.","歷史是我最喜歡的學校科目。"],
+["such","It was such a funny film.","那真是部好笑的電影。"],
+["suddenly","Suddenly, it started to snow heavily.","突然間，雪下得很大。"],
+["sugar","Do you take sugar in your tea?","你的茶要加糖嗎？"],
+["suitcase","Pack your suitcase for the trip tonight.","今晚收拾好你的旅行箱。"],
+["summer","We swim in the sea every summer.","我們每年夏天在海裡游泳。"],
+["sunglasses","Wear your sunglasses; the sun is bright.","戴上太陽眼鏡，陽光很強。"],
+["sure","Are you sure you locked the door?","你確定你鎖門了嗎？"],
+["surname","My surname is written on my passport.","我的姓氏寫在護照上。"],
+["surprise","The birthday party was a big surprise.","這個生日派對是個大驚喜。"],
+["swan","A white swan swam across the lake.","一隻白天鵝游過湖面。"],
+["swing","The children played on the swing in the park.","孩子們在公園裡盪鞦韆。"],
+["take","Take an umbrella; it might rain today.","帶把傘，今天可能會下雨。"],
+["taste","This soup tastes very good.","這湯嚐起來很好喝。"],
+["taxi","We took a taxi to the airport.","我們搭計程車去機場。"],
+["team","Our team won the match on Saturday.","我們的隊伍星期六贏了比賽。"],
+["telephone","The telephone rang during dinner.","晚餐時電話響了。"],
+["tent","We slept in a tent under the stars.","我們在星空下睡帳篷。"],
+["thank","I want to thank you for your help.","我想謝謝你的幫忙。"],
+["theatre","We saw a play at the theatre last night.","昨晚我們在劇院看了一齣戲。"],
+["thousand","A thousand people watched the concert.","有一千人看了那場音樂會。"],
+["through","The train goes through a long tunnel.","火車穿過一條長長的隧道。"],
+["tidy","Please keep your room clean and tidy.","請保持你的房間乾淨整齊。"],
+["time","What time does the film start?","電影幾點開始？"],
+["timetable","Check the timetable for the next train.","查看時刻表上的下一班火車。"],
+["toe","I hurt my toe on the door.","我的腳趾撞到門，受傷了。"],
+["together","We worked together to finish the puzzle.","我們一起完成了拼圖。"],
+["tomorrow","We are going to the zoo tomorrow.","我們明天要去動物園。"],
+["tonight","There is a good film on TV tonight.","今晚電視上有一部好電影。"],
+["torch","Take a torch when you walk at night.","夜裡走路時帶一支手電筒。"],
+["tortoise","The tortoise walks very slowly.","烏龜走得很慢。"],
+["touch","Do not touch the hot plate.","不要碰熱盤子。"],
+["tour","We went on a tour of the castle.","我們參觀了那座城堡。"],
+["traffic","There was heavy traffic this morning.","今天早上交通很擁擠。"],
+["trainers","I need new trainers for the sports day.","運動會我需要一雙新的運動鞋。"],
+["tune","That song has a lovely tune.","那首歌的旋律很優美。"],
+["turn","It is your turn to roll the dice.","輪到你擲骰子了。"],
+["turn off","Please turn off the lights before bed.","睡前請關燈。"],
+["turn on","Turn on the TV; the match is starting.","打開電視，比賽要開始了。"],
+["twice","I brush my teeth twice a day.","我每天刷兩次牙。"],
+["tyre","The bike has a flat tyre.","腳踏車的輪胎沒氣了。"],
+["umbrella","Take your umbrella; it looks like rain.","帶上雨傘，看起來要下雨了。"],
+["unfriendly","The unfriendly dog barked at everyone.","那隻不友善的狗對每個人叫。"],
+["unhappy","She looked unhappy after losing the game.","輸掉比賽後她看起來不開心。"],
+["uniform","We wear a blue uniform to school.","我們穿藍色制服上學。"],
+["university","My sister studies medicine at university.","我姐姐在大學讀醫學。"],
+["unkind","It is unkind to laugh at others.","嘲笑別人是不友善的。"],
+["untidy","His desk is always untidy and messy.","他的書桌總是又亂又髒。"],
+["until","We waited until the rain stopped.","我們一直等到雨停。"],
+["unusual","That is an unusual name for a cat.","那是貓咪很少見的名字。"],
+["use","Can I use your ruler for a minute?","我可以借你的尺用一下嗎？"],
+["usually","I usually walk to school with my friend.","我通常和朋友走路上學。"],
+["view","The view from the top was beautiful.","從山頂看下去的風景很美。"],
+["violin","She practises the violin every evening.","她每天晚上練習小提琴。"],
+["visit","We visit our grandparents every weekend.","我們每個週末探望爺爺奶奶。"],
+["volleyball","We play volleyball on the beach in summer.","夏天我們在沙灘上打排球。"],
+["waiter","The waiter brought us the menu.","服務生給我們送來了菜單。"],
+["warm","Put on a warm coat; it is cold.","穿上暖和的外套，天氣很冷。"],
+["way","Can you show me the way to the station?","你可以告訴我去車站的路嗎？"],
+["west","The sun sets in the west.","太陽從西邊落下。"],
+["wheel","A bicycle has two wheels.","自行車有兩個輪子。"],
+["while","I read a book while waiting for the bus.","等公車時我看了一本書。"],
+["whisper","Do not whisper during the exam.","考試時不要竊竊私語。"],
+["whistle","The referee blew the whistle loudly.","裁判大聲吹哨。"],
+["wife","His wife is a doctor at the hospital.","他的妻子是醫院的醫生。"],
+["wifi","The wifi is not working today.","今天的無線網路不能用。"],
+["wild","We saw wild horses on the mountain.","我們在山上看到了野馬。"],
+["will","I will call you when I get home.","我到家後會打電話給你。"],
+["William","William wants to be a pilot one day.","威廉希望有一天能當飛行員。"],
+["win","Our team hopes to win the match.","我們的隊伍希望贏得比賽。"],
+["wing","The bird hurt its wing in the storm.","那隻鳥在暴風雨中傷了翅膀。"],
+["winner","The winner of the race got a medal.","賽跑的優勝者獲得了一面獎牌。"],
+["winter","It snows a lot in winter here.","這裡冬天下很多雪。"],
+["wish","I wish you a happy birthday.","祝你生日快樂。"],
+["without","I cannot go without my school bag.","沒有書包我不能去。"],
+["wonderful","We had a wonderful time at the beach.","我們在海邊玩得很開心。"],
+["wood","The table is made of dark wood.","這張桌子是深色木頭做的。"],
+["wool","This sweater is made of warm wool.","這件毛衣是溫暖的羊毛做的。"],
+["worried","Mum was worried when I came home late.","我晚回家時媽媽很擔心。"],
+["x-ray","The doctor took an x-ray of my arm.","醫生為我的手臂照了X光。"],
+["yet","Have you finished your homework yet?","你的功課做完了嗎？"],
+["yoghurt","I eat yoghurt with fruit for breakfast.","我早餐吃優格配水果。"],
+["you're welcome!","Thank you for the gift. You're welcome!","謝謝你的禮物。不客氣！"],
+["zero","The temperature fell below zero last night.","昨晚氣溫降到零度以下。"],
+["twenty-first","Today is the twenty-first of May.","今天是五月二十一日。"],
+["twenty-second","Her birthday is the twenty-second of June.","她的生日是六月二十二日。"],
+["twenty-third","The party is on the twenty-third of July.","派對在七月二十三日。"],
+["twenty-fourth","Christmas Eve is the twenty-fourth of December.","平安夜是十二月二十四日。"],
+["twenty-fifth","Christmas Day is the twenty-fifth of December.","聖誕節是十二月二十五日。"],
+["twenty-sixth","Today is the twenty-sixth of August.","今天是八月二十六日。"],
+["twenty-seventh","The concert is on the twenty-seventh of October.","音樂會在十月二十七日。"],
+["twenty-eighth","My exam is on the twenty-eighth of November.","我的考試在十一月二十八日。"],
+["twenty-ninth","The school trip is on the twenty-ninth of April.","學校旅行在四月二十九日。"],
+["thirtieth","Grandpa's birthday is the thirtieth of September.","爺爺的生日是九月三十日。"],
+["thirty-first","New Year's Eve is the thirty-first of December.","除夕是十二月三十一日。"]
+];
+
+
+// ===== 音效（Web Audio 合成，不需外部檔案） =====
+let audioCtx = null;
+function tone(freq, t0, dur, vol=0.22, type='sine'){
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type=type; o.frequency.value=freq;
+  g.gain.setValueAtTime(0.0001, audioCtx.currentTime+t0);
+  g.gain.exponentialRampToValueAtTime(vol, audioCtx.currentTime+t0+0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+t0+dur);
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start(audioCtx.currentTime+t0); o.stop(audioCtx.currentTime+t0+dur+0.05);
+}
+function playSound(kind){
+  try{
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==='suspended') audioCtx.resume();
+    if(kind==='good'){ tone(523.25,0,0.14); tone(659.25,0.12,0.14); tone(783.99,0.24,0.22); }
+    else { tone(233.08,0,0.16,0.20,'square'); tone(185.00,0.15,0.22,0.20,'square'); tone(155.56,0.33,0.30,0.20,'square'); }  // 答錯：低音喇叭聲
+  }catch(e){}
+}
+
+// ===== 發音 =====
+function speak(text, lang){
+  if(!('speechSynthesis' in window)){ alert('此瀏覽器不支援語音功能'); return; }
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang; u.rate = 0.85;
+  const vs = speechSynthesis.getVoices().filter(v => v.lang && v.lang.toLowerCase().startsWith(lang.split('-')[0]));
+  if(vs.length) u.voice = vs[0];
+  speechSynthesis.speak(u);
+}
+if('speechSynthesis' in window) speechSynthesis.getVoices();
+
+
+// ===== 自動播放（念英文→中文，自動翻下一張） =====
+let autoMode = false, autoTimer = null, utterCount = 0;
+function speakCb(text, lang, cb){
+  if(!('speechSynthesis' in window)){ cb&&cb(); return; }
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang; u.rate = 0.85;
+  const vs = speechSynthesis.getVoices().filter(v => v.lang && v.lang.toLowerCase().startsWith(lang.split('-')[0]));
+  if(vs.length) u.voice = vs[0];
+  let done=false;
+  const fin=()=>{ if(!done){done=true; cb&&cb();} };
+  u.onend = fin; u.onerror = fin;
+  speechSynthesis.speak(u);
+  setTimeout(fin, Math.max(2500, text.length*250)); // 保險逾時
+}
+function clearAutoTimer(){ if(autoTimer){ clearTimeout(autoTimer); autoTimer=null; } }
+function toggleAuto(){
+  autoMode = !autoMode;
+  const b = document.getElementById('autoBtn');
+  b.classList.toggle('active', autoMode);
+  b.style.background = autoMode ? '#4a6cf7' : '';
+  b.style.color = autoMode ? '#fff' : '';
+  clearAutoTimer();
+  if(autoMode){ autoSpeakCurrent(); } else { speechSynthesis.cancel(); }
+}
+function autoSpeakCurrent(){
+  if(!autoMode) return;
+  const [w,,zh] = WORDS[deck[ci]];
+  flipped=false; document.getElementById('card').classList.remove('flipped');
+  speakCb(w,'en-US',()=>{ autoTimer=setTimeout(()=>{
+    if(!autoMode) return;
+    flipped=true; document.getElementById('card').classList.add('flipped');
+    speakCb(zh,'zh-TW',()=>{ autoTimer=setTimeout(()=>{
+      if(!autoMode) return;
+      ci=(ci+1)%deck.length; renderCard(); autoSpeakCurrent();
+    }, 700); });
+  }, 350); });
+}
+// 手動切換單字卡時也自動念出英文+中文
+function speakCardBoth(){
+  const [w,,zh] = WORDS[deck[ci]];
+  speechSynthesis.cancel();
+  speakCb(w,'en-US',()=>setTimeout(()=>speak(zh,'zh-TW'),250));
+}
+
+
+// ===== 答題語音回饋（多國語言隨機播放） =====
+const PRAISE = [
+  ['真是厲害','zh-TW'],
+  ['太強了','zh-TW'],
+  ["That's amazing!",'en-US'],
+  ['本当にすごいですね！','ja-JP'],
+  ['진짜 대단해요!','ko-KR']
+];
+const CHEER = [
+  ['再試一次!','zh-TW'],
+  ['がんばって!','ja-JP'],
+  ['加油再想想!','zh-TW'],
+  ['화이팅','ko-KR'],
+  ['You can do it!','en-US']
+];
+function speakRandom(list){
+  const [text,lang] = list[Math.floor(Math.random()*list.length)];
+  speak(text, lang);
+}
+
+// ===== 單字卡 =====
+let deck = WORDS.map((w,i)=>i), ci = 0, flipped = false;
+function renderCard(){
+  const [w,pos,zh,em] = WORDS[deck[ci]];
+  document.getElementById('cardEmoji').textContent = em;
+  document.getElementById('cardEmojiBack').textContent = em;
+  document.getElementById('cardWord').textContent = w;
+  document.getElementById('cardPos').textContent = pos;
+  document.getElementById('cardZh').textContent = zh;
+  document.getElementById('cardCounter').textContent = (ci+1)+' / '+deck.length;
+  flipped = false;
+  document.getElementById('card').classList.remove('flipped');
+  logEvent('單字卡', w, zh, '');
+}
+function flipCard(){ flipped=!flipped; document.getElementById('card').classList.toggle('flipped',flipped); }
+function nextCard(){ ci=(ci+1)%deck.length; renderCard(); if(autoMode){ clearAutoTimer(); autoSpeakCurrent(); } else { speakCardBoth(); } }
+function prevCard(){ ci=(ci-1+deck.length)%deck.length; renderCard(); if(autoMode){ clearAutoTimer(); autoSpeakCurrent(); } else { speakCardBoth(); } }
+function shuffleCards(){ clearAutoTimer(); speechSynthesis.cancel(); for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]];} ci=0; renderCard(); if(autoMode) autoSpeakCurrent(); }
+function speakEn(){ speak(WORDS[deck[ci]][0], 'en-US'); }
+function speakZh(){ speak(WORDS[deck[ci]][2], 'zh-TW'); }
+(function(){
+  const row = document.getElementById('letterFilter');
+  const letters = ['全部',...new Set(WORDS.map(w=>w[0][0].toUpperCase()))];
+  letters.forEach(L=>{
+    const b=document.createElement('button'); b.textContent=L;
+    b.onclick=()=>{ row.querySelectorAll('button').forEach(x=>x.classList.remove('active')); b.classList.add('active');
+      deck = L==='全部' ? WORDS.map((w,i)=>i) : WORDS.map((w,i)=>i).filter(i=>WORDS[i][0][0].toUpperCase()===L);
+      ci=0; renderCard(); };
+    if(L==='全部') b.classList.add('active');
+    row.appendChild(b);
+  });
+})();
+
+// ===== 單字列表 =====
+let listLetter = '全部';
+(function(){
+  const row = document.getElementById('listLetterFilter');
+  const letters = ['全部',...new Set(WORDS.map(w=>w[0][0].toUpperCase()))];
+  letters.forEach(L=>{
+    const b=document.createElement('button'); b.textContent=L;
+    b.dataset.l=L;
+    b.onclick=()=>{ listLetter=L; row.querySelectorAll('button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); renderList(); };
+    if(L==='全部') b.classList.add('active');
+    row.appendChild(b);
+  });
+})();
+function renderList(){
+  const q = (document.getElementById('searchBox').value||'').trim().toLowerCase();
+  const grid = document.getElementById('wordGrid'); grid.innerHTML='';
+  WORDS.forEach(([w,pos,zh,em],i)=>{
+    if(listLetter!=='全部' && w[0].toUpperCase()!==listLetter) return;
+    if(q && !w.toLowerCase().includes(q) && !zh.includes(q)) return;
+    const d=document.createElement('div'); d.className='item';
+    d.innerHTML = '<div class="em">'+em+'</div><div class="wd">'+w+'</div><div class="ps">'+pos+'</div><div class="zw">'+zh+'</div>';
+    const row=document.createElement('div');
+    const b1=document.createElement('button'); b1.className='speak-btn sm'; b1.textContent='🔊EN'; b1.title='英文發音';
+    b1.onclick=()=>speak(w,'en-US');
+    const b2=document.createElement('button'); b2.className='speak-btn sm'; b2.textContent='🔊中'; b2.title='中文發音';
+    b2.onclick=()=>speak(zh,'zh-TW');
+    row.appendChild(b1); row.appendChild(b2);
+    d.appendChild(row);
+    grid.appendChild(d);
+  });
+  if(!grid.children.length) grid.innerHTML='<p style="grid-column:1/-1;text-align:center;color:#999;padding:30px">找不到符合的單字</p>';
+}
+
+// ===== 填空測驗（不顯示英文單字，挖空部分字母） =====
+let quizOrder = [], qi = 0, qScore = 0, qTotal = 0;
+let quizCount = 10, quizLetter = '隨機';
+
+document.getElementById('countRow').querySelectorAll('button').forEach(b=>{
+  b.onclick=()=>{ document.getElementById('countRow').querySelectorAll('button').forEach(x=>x.classList.remove('active')); b.classList.add('active');
+    quizCount = b.dataset.c==='all' ? 'all' : parseInt(b.dataset.c); updateSetupInfo(); };
+});
+(function(){
+  const row = document.getElementById('quizLetterRow');
+  const letters = ['隨機',...new Set(WORDS.map(w=>w[0][0].toUpperCase()))];
+  letters.forEach(L=>{
+    const b=document.createElement('button'); b.textContent=L;
+    b.onclick=()=>{ row.querySelectorAll('button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); quizLetter=L; updateSetupInfo(); };
+    if(L==='隨機') b.classList.add('active');
+    row.appendChild(b);
+  });
+})();
+function poolSize(){ return quizLetter==='隨機' ? WORDS.length : WORDS.filter(w=>w[0][0].toUpperCase()===quizLetter).length; }
+function updateSetupInfo(){
+  const n = quizCount==='all' ? poolSize() : Math.min(quizCount, poolSize());
+  document.getElementById('setupInfo').textContent = '範圍：' + (quizLetter==='隨機'?'全部字母':quizLetter+' 開頭') + '（共 '+poolSize()+' 個單字）｜將出 '+n+' 題';
+}
+function startQuiz(){
+  let pool = WORDS.map((w,i)=>i);
+  if(quizLetter!=='隨機') pool = pool.filter(i=>WORDS[i][0][0].toUpperCase()===quizLetter);
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  const n = quizCount==='all' ? pool.length : Math.min(quizCount, pool.length);
+  quizOrder = pool.slice(0,n); qi=0; qScore=0; qTotal=0;
+  document.getElementById('quizSetup').style.display='none';
+  document.getElementById('quizResult').style.display='none';
+  document.getElementById('quizMain').style.display='block';
+  buildQuiz();
+}
+function backToSetup(){
+  document.getElementById('quizSetup').style.display='block';
+  document.getElementById('quizResult').style.display='none';
+  document.getElementById('quizMain').style.display='none';
+  updateSetupInfo();
+}
+function buildQuiz(){
+  const idx = quizOrder[qi], [w,pos,zh] = WORDS[idx];
+  document.getElementById('quizZh').textContent = zh;
+  document.getElementById('quizPos').textContent = pos + '　（共 ' + w.replace(/[^a-zA-Z]/g,'').length + ' 個字母）';
+  const fb0=document.getElementById('quizFeedback'); fb0.textContent=''; fb0.className='feedback';
+  const box = document.getElementById('quizBlanks'); box.innerHTML='';
+  const chars = [...w];
+  const alpha = chars.map(c=>/[a-zA-Z]/.test(c));
+  const blank = chars.map((c,i)=>{
+    if(!alpha[i]) return false;
+    const prevAlpha = i>0 && alpha[i-1];
+    if(!prevAlpha) return false;
+    return Math.random() < 0.65;
+  });
+  if(!blank.some(b=>b)){ const cand = chars.map((c,i)=>alpha[i]&&(i>0&&alpha[i-1])?i:-1).filter(i=>i>=0); if(cand.length) blank[cand[0]]=true; }
+  chars.forEach((c,i)=>{
+    const span=document.createElement('span');
+    if(alpha[i]){
+      if(blank[i]){
+        span.className='ch';
+        const inp=document.createElement('input');
+        inp.maxLength=1; inp.dataset.ans=c.toLowerCase(); inp.autocomplete='off';
+        inp.oninput=()=>{ const nx=nextInput(inp); if(inp.value&&nx) nx.focus(); };
+        inp.onkeydown=e=>{ if(e.key==='Backspace'&&!inp.value){const pv=prevInput(inp); if(pv){pv.focus(); pv.value='';}} };
+        span.appendChild(inp);
+      } else { span.className='ch shown'; span.textContent=c; }
+    } else if(c===' '){ span.className='ch space'; }
+    else { span.className='ch punct'; span.textContent=c; }
+    box.appendChild(span);
+  });
+  const first=box.querySelector('input'); if(first) first.focus();
+  updateScore();
+}
+function nextInput(el){ const ins=[...document.querySelectorAll('#quizBlanks input')]; const i=ins.indexOf(el); return ins[i+1]||null; }
+function prevInput(el){ const ins=[...document.querySelectorAll('#quizBlanks input')]; const i=ins.indexOf(el); return ins[i-1]||null; }
+function updateScore(){ document.getElementById('quizScore').textContent = '得分：'+qScore+' / '+qTotal+'　｜　第 '+(qi+1)+' 題 / 共 '+quizOrder.length+' 題'; }
+function checkQuiz(){
+  const ins=[...document.querySelectorAll('#quizBlanks input')];
+  let allOk=true;
+  ins.forEach(inp=>{
+    const ok = inp.value.trim().toLowerCase()===inp.dataset.ans;
+    inp.classList.toggle('ok',ok); inp.classList.toggle('bad',!ok);
+    if(!ok) allOk=false;
+  });
+  qTotal++;
+  const fb=document.getElementById('quizFeedback');
+  if(allOk){ qScore++; fb.textContent='🎉 答對了！'; fb.className='feedback good'; playSound('good'); setTimeout(()=>speakRandom(PRAISE),600); }
+  else { fb.textContent='再試試看，紅色的格子有錯喔！'; fb.className='feedback bad'; playSound('bad'); setTimeout(()=>speakRandom(CHEER),700); }
+  const qw=WORDS[quizOrder[qi]]; logEvent('填空測驗', qw[0], qw[2], allOk?'✅ 答對':'❌ 答錯');
+  updateScore();
+}
+function revealQuiz(){
+  const [w] = WORDS[quizOrder[qi]];
+  document.querySelectorAll('#quizBlanks input').forEach(inp=>{ inp.value=inp.dataset.ans; inp.classList.remove('bad'); inp.classList.add('ok'); });
+  const fb=document.getElementById('quizFeedback');
+  fb.textContent='答案：'+w; fb.className='feedback';
+  speak(w,'en-US');
+}
+function quizHint(){ speak(WORDS[quizOrder[qi]][0],'en-US'); }
+function nextQuiz(){
+  qi++;
+  if(qi>=quizOrder.length){ showResult(); return; }
+  buildQuiz();
+}
+function showResult(){
+  document.getElementById('quizMain').style.display='none';
+  document.getElementById('quizResult').style.display='block';
+  const pct = quizOrder.length ? Math.round(qScore/quizOrder.length*100) : 0;
+  let praise = pct>=90 ? '🌟 太厲害了！' : pct>=70 ? '👏 很棒！' : pct>=50 ? '💪 繼續加油！' : '📖 多多練習喔！';
+  document.getElementById('resultText').innerHTML = '測驗結束！<br>得分：'+qScore+' / '+quizOrder.length+'（'+pct+' 分）<br>'+praise;
+}
+
+
+// ===== 學習歷程（localStorage 持久保存） =====
+const HIST_KEY = 'flyersHistory';
+function getHist(){ try{ return JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); }catch(e){ return []; } }
+function saveHist(h){ try{ localStorage.setItem(HIST_KEY, JSON.stringify(h.slice(-2000))); }catch(e){} }
+function nowStr(){ const d=new Date(); const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds()); }
+function logEvent(type, word, zh, result){
+  const h=getHist(); h.push({t:nowStr(), type, word, zh, result}); saveHist(h);
+}
+function renderHistory(){
+  const h=getHist();
+  const cardViews=h.filter(e=>e.type==='單字卡');
+  const quiz=h.filter(e=>e.type==='填空測驗');
+  const uniqWords=new Set(cardViews.map(e=>e.word)).size;
+  const correct=quiz.filter(e=>e.result==='✅ 答對').length;
+  const rate=quiz.length?Math.round(correct/quiz.length*100):0;
+  document.getElementById('histSummary').innerHTML =
+    '<div class="stat-card"><div class="num">'+cardViews.length+'</div><div class="lbl">看過單字（次）</div></div>'+
+    '<div class="stat-card"><div class="num">'+uniqWords+'</div><div class="lbl">不重複單字（個）</div></div>'+
+    '<div class="stat-card"><div class="num">'+quiz.length+'</div><div class="lbl">做過測驗（題）</div></div>'+
+    '<div class="stat-card"><div class="num">'+rate+'%</div><div class="lbl">測驗答對率</div></div>';
+  const body=document.getElementById('histBody'); body.innerHTML='';
+  const recent=h.slice(-300).reverse();
+  recent.forEach(e=>{
+    const tr=document.createElement('tr');
+    [e.t,e.type,e.word,e.zh,e.result||''].forEach(v=>{ const td=document.createElement('td'); td.textContent=v; tr.appendChild(td); });
+    body.appendChild(tr);
+  });
+  if(!recent.length) body.innerHTML='<tr><td colspan="5" style="padding:30px;color:#999">尚無學習紀錄，快去看單字卡或做測驗吧！</td></tr>';
+}
+function histToRows(){
+  const h=getHist();
+  return [['時間','類型','英文','中文','結果'], ...h.map(e=>[e.t,e.type,e.word,e.zh,e.result||''])];
+}
+function downloadFile(content, filename, mime){
+  let url, revoke=false;
+  try{
+    const blob=new Blob([content],{type:mime});
+    url=URL.createObjectURL(blob); revoke=true;
+  }catch(e){
+    url='data:'+mime+','+encodeURIComponent(content);
+  }
+  // 1) 嘗試自動觸發下載
+  try{
+    const a=document.createElement('a');
+    a.href=url; a.download=filename; a.style.display='none';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ if(a.parentNode) a.parentNode.removeChild(a); },3000);
+  }catch(e){}
+  // 2) 顯示下載提示列（Android Chrome 可點擊或長按另存）
+  const bar=document.getElementById('dlBar');
+  bar.innerHTML='';
+  const link=document.createElement('a');
+  link.href=url; link.download=filename;
+  link.textContent='📥 '+filename;
+  const close=document.createElement('button');
+  close.textContent='✕';
+  close.onclick=()=>{ bar.style.display='none'; if(revoke) URL.revokeObjectURL(url); };
+  const tip=document.createElement('div'); tip.className='tip';
+  tip.textContent='若未自動下載：點上方連結，或「長按連結 → 下載連結」即可儲存';
+  bar.appendChild(link); bar.appendChild(close); bar.appendChild(tip);
+  bar.style.display='flex';
+  setTimeout(()=>{ if(bar.style.display==='flex' && revoke) URL.revokeObjectURL(url); },60000);
+}
+function downloadCSV(){
+  const rows=histToRows();
+  const csv='﻿'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  downloadFile(csv, '學習歷程_'+nowStr().replace(/[: ]/g,'-')+'.csv', 'text/csv;charset=utf-8');
+}
+function downloadTXT(){
+  const rows=histToRows();
+  const txt=rows.map(r=>r.join(' | ')).join('\r\n');
+  downloadFile(txt, '學習歷程_'+nowStr().replace(/[: ]/g,'-')+'.txt', 'text/plain;charset=utf-8');
+}
+function clearHistory(){
+  if(confirm('確定要清除所有學習紀錄嗎？此動作無法復原。')){ saveHist([]); renderHistory(); }
+}
+
+
+// ===== 左右箭頭：依目前分頁決定翻單字卡或例句卡 =====
+function arrowNav(d){
+  if(document.getElementById('sentPanel').style.display==='block'){ d>0 ? nextSent() : prevSent(); }
+  else { d>0 ? nextCard() : prevCard(); }
+}
+
+// ===== 例句卡（含字母分類與自動播放） =====
+let sdeck = SENTENCES.map((x,i)=>i), si = 0, sentAuto = false, sentTimer = null;
+function renderSent(){
+  const idx = sdeck[si];
+  const [w,en,zh] = SENTENCES[idx];
+  document.getElementById('sentEmoji').textContent = WORDS[idx][3];
+  document.getElementById('sentWord').textContent = w;
+  document.getElementById('sentEn').textContent = en;
+  document.getElementById('sentZh').textContent = zh;
+  document.getElementById('sentCounter').textContent = (si+1)+' / '+sdeck.length;
+  logEvent('例句卡', w, zh, '');
+}
+function speakSentEn(){ speechSynthesis.cancel(); speak(SENTENCES[sdeck[si]][1],'en-US'); }
+function speakSentZh(){ speechSynthesis.cancel(); speak(SENTENCES[sdeck[si]][2],'zh-TW'); }
+function speakSentBoth(){
+  const [,en,zh] = SENTENCES[sdeck[si]];
+  speechSynthesis.cancel();
+  speakCb(en,'en-US',()=>setTimeout(()=>speak(zh,'zh-TW'),250));
+}
+function clearSentTimer(){ if(sentTimer){ clearTimeout(sentTimer); sentTimer=null; } }
+function nextSent(){
+  si=(si+1)%sdeck.length; renderSent();
+  if(sentAuto){ clearSentTimer(); autoSentPlay(); } else { speakSentBoth(); }
+}
+function prevSent(){
+  si=(si-1+sdeck.length)%sdeck.length; renderSent();
+  if(sentAuto){ clearSentTimer(); autoSentPlay(); } else { speakSentBoth(); }
+}
+function toggleSentAuto(){
+  sentAuto = !sentAuto;
+  const b = document.getElementById('sentAutoBtn');
+  b.style.background = sentAuto ? '#4a6cf7' : '';
+  b.style.color = sentAuto ? '#fff' : '';
+  clearSentTimer();
+  if(sentAuto){ autoSentPlay(); } else { speechSynthesis.cancel(); }
+}
+function autoSentPlay(){
+  if(!sentAuto) return;
+  const [,en,zh] = SENTENCES[sdeck[si]];
+  speakCb(en,'en-US',()=>{ sentTimer=setTimeout(()=>{
+    if(!sentAuto) return;
+    speakCb(zh,'zh-TW',()=>{ sentTimer=setTimeout(()=>{
+      if(!sentAuto) return;
+      si=(si+1)%sdeck.length; renderSent(); autoSentPlay();
+    }, 800); });
+  }, 400); });
+}
+// 例句卡字母篩選
+(function(){
+  const row = document.getElementById('sentLetterFilter');
+  const letters = ['全部',...new Set(SENTENCES.map(x=>x[0][0].toUpperCase()))];
+  letters.forEach(L=>{
+    const b=document.createElement('button'); b.textContent=L;
+    b.onclick=()=>{ row.querySelectorAll('button').forEach(x=>x.classList.remove('active')); b.classList.add('active');
+      clearSentTimer(); speechSynthesis.cancel();
+      sdeck = L==='全部' ? SENTENCES.map((x,i)=>i) : SENTENCES.map((x,i)=>i).filter(i=>SENTENCES[i][0][0].toUpperCase()===L);
+      si=0; renderSent(); if(sentAuto) autoSentPlay(); };
+    if(L==='全部') b.classList.add('active');
+    row.appendChild(b);
+  });
+})();
+
+function switchMode(m){
+  ['card','list','quiz','history','sent'].forEach(k=>{
+    document.getElementById('tab'+k[0].toUpperCase()+k.slice(1)).classList.toggle('active',m===k);
+    document.getElementById(k+'Panel').style.display = m===k?'block':'none';
+  });
+  const showArrow = (m==='card'||m==='sent')?'block':'none';
+  document.getElementById('arrowL').style.display = showArrow;
+  document.getElementById('arrowR').style.display = showArrow;
+  if(m!=='card' && autoMode){ toggleAuto(); }
+  if(m!=='sent' && sentAuto){ toggleSentAuto(); }
+  if(m==='sent' && !document.getElementById('sentEn').textContent){ renderSent(); }
+  if(m!=='sent' && sentAuto){ toggleSentAuto(); }
+  if(m==='sent' && !document.getElementById('sentEn').textContent){ renderSent(); }
+  if(m==='list') renderList();
+  if(m==='history') renderHistory();
+}
+renderCard();
+updateSetupInfo();
+document.getElementById('arrowL').style.display='block';
+document.getElementById('arrowR').style.display='block';
+</script>
+</body>
+</html>
