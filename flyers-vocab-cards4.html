@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flyers 單字卡練習</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Microsoft JhengHei", "PingFang TC", sans-serif; background: #f0f4ff; min-height: 100vh; color: #333; }
+  header { background: linear-gradient(135deg,#4a6cf7,#7b5cf0); color: #fff; padding: 18px 12px; text-align: center; }
+  header h1 { font-size: 1.4rem; }
+  header p { font-size: .85rem; opacity: .85; margin-top: 4px; }
+  .tabs { display: flex; justify-content: center; gap: 10px; margin: 16px auto 8px; flex-wrap: wrap; }
+  .tabs button { padding: 10px 24px; border: none; border-radius: 24px; font-size: 1rem; cursor: pointer; background: #dfe6ff; color: #4a6cf7; font-weight: bold; transition: .2s; }
+  .tabs button.active { background: #4a6cf7; color: #fff; }
+  .panel { max-width: 900px; margin: 0 auto; padding: 12px 16px 40px; }
+  /* 左右箭頭 */
+  .arrow { position: fixed; top: 50%; transform: translateY(-50%); z-index: 10;
+    width: 56px; height: 56px; border: none; border-radius: 50%; font-size: 1.6rem; cursor: pointer;
+    background: #4a6cf7; color: #fff; box-shadow: 0 4px 14px rgba(74,108,247,.4); transition: .2s; display: none; }
+  .arrow:hover { background: #7b5cf0; transform: translateY(-50%) scale(1.1); }
+  .arrow.left { left: 12px; }
+  .arrow.right { right: 12px; }
+  /* 單字卡 */
+  .card-wrap { perspective: 1000px; margin: 18px auto; width: 100%; max-width: 420px; height: 260px; cursor: pointer; }
+  .card { position: relative; width: 100%; height: 100%; transition: transform .5s; transform-style: preserve-3d; }
+  .card.flipped { transform: rotateY(180deg); }
+  .face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 8px 24px rgba(74,108,247,.18); padding: 16px; }
+  .front { background: #fff; }
+  .back { background: #4a6cf7; color: #fff; transform: rotateY(180deg); }
+  .emoji { font-size: 3.4rem; line-height: 1; }
+  .word { font-size: 2rem; font-weight: bold; color: #333; text-align: center; }
+  .pos { font-size: .9rem; color: #999; }
+  .zh { font-size: 1.6rem; font-weight: bold; text-align: center; }
+  .hint { font-size: .8rem; color: #bbb; }
+  .speak-row { display: flex; gap: 12px; }
+  .speak-btn { border: none; background: #eef2ff; border-radius: 50%; width: 52px; height: 52px; font-size: 1.15rem; cursor: pointer; transition: .2s; }
+  .speak-btn:hover { background: #dfe6ff; transform: scale(1.08); }
+  .speak-btn.light { background: rgba(255,255,255,.25); }
+  .speak-btn.sm { width: 38px; height: 38px; font-size: .95rem; }
+  .nav { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 8px; }
+  .nav button { padding: 10px 22px; border: none; border-radius: 12px; background: #4a6cf7; color: #fff; font-size: 1rem; cursor: pointer; }
+  .nav button.ghost { background: #dfe6ff; color: #4a6cf7; }
+  .counter { font-weight: bold; color: #666; }
+  .filter-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 12px; }
+  .filter-row button { border: 1px solid #ccd6ff; background: #fff; color: #4a6cf7; border-radius: 8px; padding: 4px 9px; font-size: .82rem; cursor: pointer; }
+  .filter-row button.active { background: #4a6cf7; color: #fff; }
+  /* 單字列表 */
+  .list-tools { display: flex; gap: 10px; justify-content: center; margin: 14px 0; flex-wrap: wrap; }
+  .list-tools input { padding: 9px 16px; border: 1px solid #ccd6ff; border-radius: 20px; font-size: 1rem; width: min(320px,80vw); outline: none; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 12px; }
+  .item { background: #fff; border-radius: 14px; padding: 12px 10px; text-align: center; box-shadow: 0 3px 10px rgba(74,108,247,.10); }
+  .item .em { font-size: 1.9rem; }
+  .item .wd { font-weight: bold; margin-top: 4px; word-break: break-word; }
+  .item .ps { font-size: .75rem; color: #999; }
+  .item .zw { font-size: .9rem; color: #555; margin-top: 2px; }
+  .item button { margin-top: 6px; }
+  /* 測驗 */
+  .quiz-box { background: #fff; border-radius: 20px; padding: 28px 20px; box-shadow: 0 8px 24px rgba(74,108,247,.15); text-align: center; margin-top: 18px; max-width: 640px; margin-left: auto; margin-right: auto; }
+  .quiz-zh { font-size: 1.5rem; font-weight: bold; margin-bottom: 4px; }
+  .quiz-pos { color: #999; font-size: .9rem; margin-bottom: 18px; }
+  .blanks { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-bottom: 18px; }
+  .ch { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 44px; font-size: 1.4rem; font-weight: bold; }
+  .ch.shown { color: #4a6cf7; border-bottom: 3px solid #ccd6ff; }
+  .ch input { width: 34px; height: 44px; text-align: center; font-size: 1.4rem; font-weight: bold; border: none; border-bottom: 3px solid #4a6cf7; background: #f6f8ff; outline: none; text-transform: lowercase; }
+  .ch input.ok { color: #1a9c4b; border-bottom-color: #1a9c4b; background: #e9f9ef; }
+  .ch input.bad { color: #d33; border-bottom-color: #d33; background: #fdecec; }
+  .ch.space { width: 16px; }
+  .ch.punct { color: #aaa; }
+  .setup-label { font-weight: bold; margin: 14px 0 8px; color: #555; }
+  .setup-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .setup-row button { padding: 8px 18px; border: 1px solid #ccd6ff; background: #fff; color: #4a6cf7; border-radius: 18px; font-size: .95rem; cursor: pointer; }
+  .setup-row button.active { background: #4a6cf7; color: #fff; }
+  .quiz-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .quiz-actions button { padding: 10px 20px; border: none; border-radius: 12px; font-size: 1rem; cursor: pointer; background: #4a6cf7; color: #fff; }
+  .quiz-actions button.ghost { background: #dfe6ff; color: #4a6cf7; }
+  .quiz-actions button.warn { background: #f7a54a; }
+  .feedback { margin-top: 14px; font-size: 1.15rem; font-weight: bold; min-height: 1.6em; }
+  .feedback.good { color: #1a9c4b; }
+  .feedback.bad { color: #d33; }
+  .score { margin-top: 6px; color: #666; }
+
+  /* 下載提示列（Android Chrome 相容） */
+  #dlBar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 99; display: none;
+    align-items: center; justify-content: center; gap: 10px; padding: 14px 16px;
+    background: #333; box-shadow: 0 -4px 16px rgba(0,0,0,.25); flex-wrap: wrap; }
+  #dlBar a { color: #ffd54a; font-weight: bold; font-size: .95rem; word-break: break-all; }
+  #dlBar .tip { color: #bbb; font-size: .8rem; width: 100%; text-align: center; }
+  #dlBar button { border: none; background: #666; color: #fff; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; flex-shrink: 0; }
+  /* 學習歷程 */
+  .hist-summary { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 16px 0; }
+  .stat-card { background: #fff; border-radius: 14px; padding: 14px 20px; text-align: center; box-shadow: 0 3px 10px rgba(74,108,247,.10); min-width: 110px; }
+  .stat-card .num { font-size: 1.6rem; font-weight: bold; color: #4a6cf7; }
+  .stat-card .lbl { font-size: .8rem; color: #888; margin-top: 2px; }
+  .hist-actions { display: flex; gap: 10px; justify-content: center; margin-bottom: 14px; flex-wrap: wrap; }
+  .hist-actions button { padding: 9px 18px; border: none; border-radius: 12px; font-size: .95rem; cursor: pointer; background: #4a6cf7; color: #fff; }
+  .hist-actions button.ghost { background: #dfe6ff; color: #4a6cf7; }
+  .hist-actions button.danger { background: #e05a5a; }
+  .hist-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 3px 10px rgba(74,108,247,.08); font-size: .88rem; }
+  .hist-table th { background: #4a6cf7; color: #fff; padding: 9px 6px; }
+  .hist-table td { padding: 7px 6px; border-bottom: 1px solid #eef2ff; text-align: center; }
+  .hist-table tr:nth-child(even) td { background: #f8faff; }
+  @media (max-width: 480px) { .word { font-size: 1.6rem; } .emoji { font-size: 2.6rem; } .ch, .ch input { width: 28px; height: 38px; font-size: 1.15rem; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>📚 Flyers 單字卡練習</h1>
+  <p>Cambridge YLE Flyers Word List ｜ 點卡片翻面 ｜ 🔊 聽發音</p>
+</header>
+<div class="tabs">
+  <button id="tabCard" class="active" onclick="switchMode('card')">🃏 單字卡</button>
+  <button id="tabList" onclick="switchMode('list')">📋 單字列表</button>
+  <button id="tabQuiz" onclick="switchMode('quiz')">✏️ 填空測驗</button>
+  <button id="tabHistory" onclick="switchMode('history')">📊 學習歷程</button>
+</div>
+
+<!-- 下載提示列 -->
+<div id="dlBar"></div>
+
+<!-- 左右翻卡箭頭 -->
+<button class="arrow left" id="arrowL" title="上一張" onclick="prevCard()">⬅</button>
+<button class="arrow right" id="arrowR" title="下一張" onclick="nextCard()">➡</button>
+
+<!-- 單字卡模式 -->
+<div class="panel" id="cardPanel">
+  <div class="nav" style="margin-bottom:4px">
+    <button class="ghost" onclick="shuffleCards()">🔀 洗牌</button>
+    <button class="ghost" id="autoBtn" onclick="toggleAuto()">🔁 自動播放</button>
+    <span class="counter" id="cardCounter"></span>
+  </div>
+  <div class="card-wrap" onclick="flipCard()">
+    <div class="card" id="card">
+      <div class="face front">
+        <div class="emoji" id="cardEmoji"></div>
+        <div class="word" id="cardWord"></div>
+        <div class="pos" id="cardPos"></div>
+        <div class="speak-row">
+          <button class="speak-btn" title="英文發音" onclick="event.stopPropagation();speakEn()">🔊 EN</button>
+          <button class="speak-btn" title="中文發音" onclick="event.stopPropagation();speakZh()">🔊 中</button>
+        </div>
+        <div class="hint">點卡片看中文意思</div>
+      </div>
+      <div class="face back">
+        <div class="emoji" id="cardEmojiBack"></div>
+        <div class="zh" id="cardZh"></div>
+        <button class="speak-btn light" onclick="event.stopPropagation();speakZh()">🔊 中文發音</button>
+        <div class="hint" style="color:rgba(255,255,255,.7)">再點一次回英文</div>
+      </div>
+    </div>
+  </div>
+  <div class="nav">
+    <button class="ghost" onclick="prevCard()">⬅ 上一個</button>
+    <button onclick="speakEn()">🔊 發音</button>
+    <button class="ghost" onclick="nextCard()">下一個 ➡</button>
+  </div>
+  <div class="filter-row" id="letterFilter"></div>
+</div>
+
+<!-- 單字列表模式 -->
+<div class="panel" id="listPanel" style="display:none">
+  <div class="list-tools">
+    <input id="searchBox" placeholder="🔍 搜尋英文或中文…" oninput="renderList()">
+  </div>
+  <div class="filter-row" id="listLetterFilter"></div>
+  <div class="grid" id="wordGrid"></div>
+</div>
+
+
+<!-- 學習歷程模式 -->
+<div class="panel" id="historyPanel" style="display:none">
+  <div class="hist-summary" id="histSummary"></div>
+  <div class="hist-actions">
+    <button onclick="downloadCSV()">⬇️ 下載 CSV</button>
+    <button onclick="downloadTXT()">⬇️ 下載 TXT</button>
+    <button class="danger" onclick="clearHistory()">🗑️ 清除紀錄</button>
+  </div>
+  <div style="overflow-x:auto">
+    <table class="hist-table">
+      <thead><tr><th>時間</th><th>類型</th><th>英文</th><th>中文</th><th>結果</th></tr></thead>
+      <tbody id="histBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 測驗模式 -->
+<div class="panel" id="quizPanel" style="display:none">
+  <!-- 測驗設定 -->
+  <div class="quiz-box" id="quizSetup">
+    <div style="font-size:1.2rem;font-weight:bold;margin-bottom:14px">⚙️ 測驗設定</div>
+    <div class="setup-label">測驗題數</div>
+    <div class="setup-row" id="countRow">
+      <button data-c="10" class="active">10 題</button>
+      <button data-c="20">20 題</button>
+      <button data-c="30">30 題</button>
+      <button data-c="all">全部</button>
+    </div>
+    <div class="setup-label">字母種類</div>
+    <div class="setup-row" id="quizLetterRow"></div>
+    <div style="margin-top:18px">
+      <button style="padding:12px 40px;font-size:1.1rem" onclick="startQuiz()">🚀 開始測驗</button>
+    </div>
+    <div class="score" id="setupInfo" style="margin-top:12px"></div>
+  </div>
+
+  <!-- 測驗進行中 -->
+  <div class="quiz-box" id="quizMain" style="display:none">
+    <div class="quiz-zh" id="quizZh"></div>
+    <div class="quiz-pos" id="quizPos"></div>
+    <div class="blanks" id="quizBlanks"></div>
+    <div class="quiz-actions">
+      <button onclick="checkQuiz()">✅ 檢查答案</button>
+      <button class="warn" onclick="revealQuiz()">👀 顯示答案</button>
+      <button class="ghost" onclick="quizHint()">🔊 發音提示</button>
+      <button class="ghost" onclick="nextQuiz()">下一題 ➡</button>
+    </div>
+    <div class="feedback" id="quizFeedback"></div>
+    <div class="score" id="quizScore"></div>
+    <div style="margin-top:10px"><button class="ghost" onclick="backToSetup()" style="padding:8px 16px;font-size:.9rem;border:none;border-radius:10px;background:#dfe6ff;color:#4a6cf7;cursor:pointer">⚙️ 重新設定</button></div>
+  </div>
+
+  <!-- 測驗結果 -->
+  <div class="quiz-box" id="quizResult" style="display:none">
+    <div style="font-size:3rem">🏁</div>
+    <div style="font-size:1.4rem;font-weight:bold;margin:10px 0" id="resultText"></div>
+    <div class="quiz-actions">
+      <button onclick="startQuiz()">🔁 再測一次</button>
+      <button class="ghost" onclick="backToSetup()">⚙️ 重新設定</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// [英文, 詞性, 中文, Emoji]
+const WORDS = [
+["a.m.","","上午","🕗"],["across","prep","橫越，穿過","🌉"],["act","v","扮演","🎭"],["actor","n","(男)演員","🎬"],["actually","adv","實際上","💡"],["adventure","n","冒險","🗺️"],["after","adv/conj","之後；在…之後","⏭️"],["ago","adv","在…以前","⏪"],["agree","v","同意；贊同","🤝"],["air","n","空氣","💨"],["airport","n","機場","✈️"],["alone","adj","單獨的","🧍"],["already","adv","已經","✅"],["also","adv","也","➕"],["amazing","adj/excl","令人吃驚的","😲"],["ambulance","n","救護車","🚑"],["anyone","pron","任何人","🙋"],["anything","pron","任何東西","📦"],["anywhere","adv","在任何地方","🌐"],["appear","v","出現","✨"],["April","n","四月","📅"],["arrive","v","到達","🛬"],["art","n","藝術；美術","🎨"],["artist","n","藝術家","👨‍🎨"],["as","adv","跟…一樣地","⚖️"],["as ... as","adv","像…一樣","🔄"],["astronaut","n","太空人","🧑‍🚀"],["at the moment","adv","現在；目前","⏰"],["August","n","八月","📅"],["autumn","n","秋天","🍂"],["away","adv","離開","👋"],
+["backpack","n","背包","🎒"],["bandage","n","繃帶","🩹"],["bank","n","銀行","🏦"],["beetle","n","甲蟲","🪲"],["before","adv/conj","在…以前","⏮️"],["begin","v","開始","▶️"],["believe","v","相信","🙏"],["belt","n","皮帶","👔"],["Betty","n","貝蒂（人名）","👧"],["bicycle","n","腳踏車","🚲"],["bin","n","垃圾箱","🗑️"],["biscuit","n","餅乾","🍪"],["bit","n","小塊；a bit 有一點兒","🤏"],["bored","adj","厭倦的","🥱"],["borrow","v","借","📚"],["bracelet","n","手鐲","📿"],["break","v","打破；弄壞","💔"],["bridge","n","橋","🌉"],["broken","adj","損壞的","🔨"],["brush","n/v","梳子；梳頭髮","🪮"],["burn","v","燒焦","🔥"],["business","n","生意","💼"],["businessman/woman","n","商人","🧑‍💼"],["butter","n","奶油","🧈"],["butterfly","n","蝴蝶","🦋"],["by myself","adv","靠我自己","💪"],["by yourself","adv","靠你自己","🫵"],
+["calendar","n","日曆","📅"],["camel","n","駱駝","🐫"],["camp","v","露營","🏕️"],["card","n","紙牌；卡片","🃏"],["cartoon","n","卡通","📺"],["castle","n","城堡","🏰"],["cave","n","洞穴","🕳️"],["century","n","世紀","📜"],["cereal","n","麥片","🥣"],["channel","n","頻道","📡"],["chat","v","閒談","💬"],["cheap","adj","便宜的","💰"],["chemist's","n","藥局；藥劑師","💊"],["chess","n","西洋棋","♟️"],["chopsticks","n","筷子","🥢"],["club","n","俱樂部","🏟️"],["collect","v","收集","🗂️"],["college","n","大學","🎓"],["comb","n/v","梳子；梳理","💇"],["competition","n","比賽；競賽","🏆"],["concert","n","音樂會","🎵"],["conversation","n","會話","🗣️"],["cooker","n","烹調器具","🍳"],["cookie","n","餅乾（美式）","🍪"],["corner","n","街角","📐"],["costume","n","服裝","👘"],["could","v","可能","🤔"],["creature","n","生物","🐾"],["crown","n","王冠","👑"],["cushion","n","墊子","🛋️"],["cut","v","切；割；剪","✂️"],["cycle","v","騎自行車；循環","🚴"],
+["dark","adj","黑暗的","🌑"],["date","n","日期","📆"],["David","n","大衛（人名）","👦"],["dear","adj","親愛的","💌"],["December","n","十二月","📅"],["decide","v","決定","🤔"],["deep","adj","深的","🌊"],["delicious","adj","美味的","😋"],["desert","n","沙漠","🏜️"],["design","n/v","設計","📐"],["designer","n","設計師","🧑‍🎨"],["diary","n","日記","📔"],["dictionary","n","字典","📖"],["dinosaur","n","恐龍","🦕"],["disappear","v","消失","💨"],["drum","n","鼓","🥁"],["during","prep","在…的期間","⏳"],
+["each","det/pron","每個","☝️"],["eagle","n","老鷹","🦅"],["early","adj/adv","早的","🌅"],["Earth","n","地球","🌍"],["east","n","東方，東部","🧭"],["elbow","n","肘","💪"],["else","adv","其他，另外","➕"],["Emma","n","艾瑪（人名）","👧"],["empty","adj","空的","🫙"],["end","v","結束；終止","🔚"],["engine","n","引擎","🚂"],["engineer","n","工程師","👷"],["enormous","adj","巨大的","🦣"],["enough","adj/pron","足夠的","👌"],["enter","v","參加；進入","🚪"],["entrance","n","入口","🚪"],["envelope","n","信封","✉️"],["environment","n","環境","🌳"],["ever","adv","曾經","🕰️"],["everywhere","adv","到處","🌍"],["excellent","adj/excl","極好的；傑出的","🌟"],["excited","adj","興奮的","🤩"],["exit","n","出口","🚪"],["expensive","adj","昂貴的","💎"],["explain","v","解釋","💭"],["explore","v","探索","🔍"],["extinct","adj","滅絕的","🦴"],
+["factory","n","工廠","🏭"],["fall","n","秋天（美式）","🍂"],["fall over","v","跌倒","🤕"],["far","adj/adv","遠的；遙遠地","🔭"],["fast","adj/adv","快的","⚡"],["February","n","二月","📅"],["feel","v","感覺","🖐️"],["festival","n","節日","🎆"],["fetch","v","(去)拿來","🐕"],["a few","det","幾個","🔢"],["file","n","檔案；文件夾","📁"],["find out","v","找出；發現；查明","🔎"],["finger","n","手指","👆"],["finish","v","結束","🏁"],["fire","n","火","🔥"],["fire engine","n","消防車","🚒"],["fire fighter","n","消防員","🧑‍🚒"],["fire station","n","消防局","🚒"],["flag","n","旗子","🚩"],["flashlight","n","手電筒","🔦"],["flour","n","麵粉","🌾"],["fog","n","霧","🌫️"],["foggy","adj","多霧的","🌫️"],["follow","v","跟隨","👣"],["for","prep","在（指定時間）","🕐"],["forget","v","忘記","😵"],["fork","n","叉子","🍴"],["Frank","n","法蘭克（人名）","👦"],["fridge","n","冰箱","🧊"],["friendly","adj","友善的","😊"],["frightening","adj","使人驚嚇的","😱"],["front","adj/n","前面的；前面","➡️"],["full","adj","充滿的","🈵"],["fur","n","毛皮","🦊"],["furry","adj","毛茸茸的","🐻"],["future","n","未來","🔮"],
+["gate","n","大門","🚪"],["geography","n","地理學","🗺️"],["George","n","喬治（人名）","👦"],["get to","v","開始","🚀"],["glass","adj","玻璃製的","🥛"],["glove","n","手套","🧤"],["glue","n/v","膠水；黏貼","🩹"],["go away!","excl","走開！","👋"],["go out","v","出門；外出","🚶"],["gold","adj/n","金色的；黃金","🥇"],["golf","n","高爾夫球","⛳"],["group","n","群；組","👥"],["guess","n/v","猜","🎲"],["gym","n","體育館；健身房","🏋️"],
+["half","adj/n","一半的；一半","➗"],["happen","v","發生","💥"],["hard","adj/adv","困難的；硬的；努力地","💎"],["Harry","n","哈利（人名）","👦"],["hate","v","嫌惡，不喜歡","😤"],["hear","v","聽","👂"],["heavy","adj","重的","🏋️"],["Helen","n","海倫（人名）","👧"],["high","adj","高的","📏"],["hill","n","小山","⛰️"],["history","n","歷史","📜"],["hole","n","洞","🕳️"],["Holly","n","荷莉（人名）","👧"],["honey","n","蜂蜜","🍯"],["hope","v","希望","🌟"],["horrible","adj","可怕的","😨"],["hotel","n","旅館；飯店","🏨"],["hour","n","小時","🕐"],["how long","adv/int","有多久","⏱️"],["hurry","v","趕緊","🏃"],["husband","n","丈夫","🤵"],
+["if","conj","如果；假如","❓"],["if you want!","excl","如果你想要的話","🤷"],["important","adj","重要的","⭐"],["improve","v","改進，改善","📈"],["in a minute!","excl","馬上；立刻","⏰"],["information","n","資訊","ℹ️"],["insect","n","昆蟲","🐛"],["instead","adv","作為替代","🔄"],["instrument","n","樂器","🎸"],["interested","adj","感興趣的","👀"],["interesting","adj","有趣的","🤩"],["invent","v","發明","💡"],["invitation","n","邀請","💌"],
+["jam","n","果醬；堵塞","🍓"],["January","n","一月","📅"],["job","n","工作","💼"],["join","v","參加（社團）","🤝"],["journalist","n","新聞記者","📰"],["journey","n","旅行","🧳"],["July","n","七月","📅"],["June","n","六月","📅"],["just","adv","正好；僅僅；只是","☝️"],
+["Katy","n","凱蒂（人名）","👧"],["keep","v","保有","🔒"],["key","n","鑰匙；線索","🔑"],["kilometre","n","公里","📏"],["kind","adj","親切的","💖"],["king","n","國王","🤴"],["knee","n","膝蓋","🦵"],["knife","n","刀","🔪"],
+["land","v","登陸；降落","🛬"],["language","n","語言","🗣️"],["large","adj","大的","🐘"],["late","adj/adv","遲的；遲到","⏰"],["later","adv","較晚地；後來","🕐"],["lazy","adj","懶散的","😴"],["leave","v","離開","👋"],["left","adj/n","左方的；左邊","⬅️"],["let","v","讓","👌"],["letter","n","信","✉️"],["lie down","v","躺","🛏️"],["lift","n","電梯（英式）","🛗"],["lift","v","舉起；抬起","🏋️"],["light","adj/n","輕的；燈；光線","💡"],["a little","adv/det","一點","🤏"],["London","n","倫敦（英國首都）","🇬🇧"],["look after","v","照顧","🤱"],["look like","v","看起來像是","👀"],["lovely","adj","可愛的","😍"],["low","adj","低的；矮的；淺的","⬇️"],["lucky","adj","幸運的","🍀"],
+["magazine","n","雜誌","📖"],["make sure","v","確定","✅"],["manager","n","經理","👨‍💼"],["March","n","三月","📅"],["married","adj","已婚的","💍"],["match","n","比賽；對手","⚽"],["maths","n","數學","🔢"],["May","n","五月","📅"],["may","v","可能","🤔"],["meal","n","一餐","🍽️"],["mechanic","n","技工","🔧"],["medicine","n","藥","💊"],["meet","v","遇見；滿足","🤝"],["meeting","n","會議","👥"],["member","n","會員","🪪"],["metal","adj/n","金屬","⚙️"],["Michael","n","麥可（人名）","👦"],["midday","n","正午；中午","🕛"],["middle","n/adj","中間；中間的","⏺️"],["midnight","n","半夜十二點","🌃"],["might","v","可能；可以","🤔"],["million","n","百萬","💰"],["mind","v","介意","🧠"],["minute","n","分鐘","⏱️"],["missing","adj","失蹤的；找不到的","🔍"],["mix","v","使混合","🥣"],["money","n","錢","💵"],["month","n","月","🗓️"],["motorway","n","高速公路","🛣️"],["much","adv/det/pron","非常；許多","💯"],["museum","n","博物館","🏛️"],
+["necklace","n","項鍊","📿"],["nest","n","巢","🪹"],["news","n","新聞；消息","📰"],["newspaper","n","報紙","📰"],["next","adj/adv","接下去的","⏭️"],["no problem!","excl","沒問題！","👌"],["noisy","adj","喧鬧的","📢"],["no-one","pron","沒人","🚫"],["north","n","北方","🧭"],["November","n","十一月","📅"],["nowhere","adv","無處","❓"],
+["ocean","n","海洋","🌊"],["October","n","十月","📅"],["octopus","n","章魚","🐙"],["of course","adv","當然","💯"],["office","n","辦公室","🏢"],["Oliver","n","奧利佛（人名）","👦"],["olives","n","橄欖","🫒"],["once","adv","一次；從前","☝️"],["online","adj","線上的","💻"],["other","det/pron","其餘的人（或物）","↔️"],["oven","n","烤箱","🔥"],["over","adv/prep","在…之上","⬆️"],
+["p.m.","","下午；午後","🕐"],["pajamas","n","睡衣褲","🛌"],["passenger","n","乘客","🧍"],["past","n/prep","過去；經過","⏪"],["path","n","小徑","🛤️"],["pepper","n","胡椒粉；辣椒","🌶️"],["perhaps","adv","或許，可能","🤷"],["photographer","n","攝影師","📸"],["piece","n","一個；一張；一片","🧩"],["pilot","n","飛行員","🧑‍✈️"],["pizza","n","披薩","🍕"],["planet","n","行星","🪐"],["plastic","adj/n","塑膠（製）的；塑膠","🧴"],["platform","n","月台","🚉"],["pleased","adj","開心的；滿意的","😊"],["pocket","n","口袋","👖"],["police officer","n","員警","👮"],["police station","n","警察局","🚓"],["pond","n","池塘","🦆"],["poor","adj","貧窮的","🥺"],["pop music","n","流行音樂","🎤"],["popular","adj","流行的；受歡迎的","🌟"],["post","v","郵寄","📮"],["post office","n","郵局","🏤"],["postcard","n","明信片","🏞️"],["prefer","v","寧可；更喜愛","❤️"],["prepare","v","準備","📋"],["prize","n","獎；獎賞；獎金","🏆"],["problem","n","問題","❓"],["programme","n","節目","📺"],["project","n","計畫","📊"],["pull","v","拉","🤏"],["push","v","推","✋"],["puzzle","n","拼圖；謎","🧩"],["pyjamas","n","睡衣褲（英式）","🛌"],["pyramid","n","金字塔","🔺"],
+["quarter","n","四分之一","🕐"],["queen","n","女王","👸"],["quite","adv","相當；很；頗","👍"],["quiz","n","測驗","📝"],
+["race","n/v","賽跑","🏁"],["racing","adj","比賽（汽車；自行車）","🏎️"],["railway","n","鐵路","🛤️"],["ready","adj","準備好的","✅"],["remember","v","記得","🧠"],["repair","v","修理","🔧"],["repeat","v","重複","🔁"],["restaurant","n","餐館","🍽️"],["rich","adj","有錢的","💰"],["Richard","n","理查（人名）","👦"],["right","adj","正確的；右邊的","✅"],["right","n","右邊","➡️"],["ring","n","戒指","💍"],["Robert","n","羅伯特（人名）","👦"],["rock music","n","搖滾音樂","🎸"],["rocket","n","火箭","🚀"],["rucksack","n","背包","🎒"],
+["salt","n","鹽","🧂"],["same","adj","相同的","🟰"],["Sarah","n","莎拉（人名）","👧"],["save","v","挽救；儲存","💾"],["science","n","科學","🔬"],["scissors","n","剪刀","✂️"],["score","n","得分","🏆"],["screen","n","螢幕","📺"],["search","n/v","搜查","🔍"],["secret","n","秘密","🤫"],["sell","v","賣","🏷️"],["September","n","九月","📅"],["several","adj","各自的；幾個的","🔢"],["shampoo","n","洗髮精","🧴"],["shelf","n","架子","📚"],["should","v","應該","👆"],["silver","adj/n","銀色的；銀色","🥈"],["since","prep","自從…；從…以來","⏳"],["singer","n","歌手","🎤"],["ski","n/v","滑雪板；滑雪","🎿"],["skyscraper","n","摩天大樓","🏙️"],["sledge","n/v","雪橇；乘雪橇","🛷"],["smell","n/v","氣味；聞到","👃"],["snack","n","點心","🍿"],["snowball","n","雪球","⚪"],["snowboard","n","滑雪板","🏂"],["snowboarding","n","單板滑雪（運動）","🏂"],["snowman","n","雪人","⛄"],["so","adv/conj","很；非常；如此","💯"],["soap","n","肥皂","🧼"],["soft","adj","柔軟的","☁️"],["somewhere","adv","在某處","📍"],["soon","adv","不久；很快","⏰"],["Sophia","n","蘇菲亞（人名）","👧"],["sore","adj","疼痛的","😣"],["sound","n/v","聲音；發聲","🔊"],["south","n","南方","🧭"],["space","n","空間；太空","🌌"],["spaceship","n","太空船","🛸"],["speak","v","說","🗣️"],["special","adj","特別的","⭐"],["spend","v","花費；用","💸"],["spoon","n","湯匙","🥄"],["spot","n","點；斑點","🔵"],["spotted","adj","有斑點的","🐆"],["spring","n","春天","🌸"],["stadium","n","體育場","🏟️"],["stage","n","舞台；階段","🎭"],["stamp","n","郵票","📮"],["stay","v","留下；停留","🏠"],["step","n","步驟；台階；腳步","👣"],["still","adv","仍然","⏸️"],["stone","n","石頭","🪨"],["storm","n","暴風雨","⛈️"],["straight on","adv","直走","⬆️"],["strange","adj","奇怪的","🤨"],["strawberry","n","草莓","🍓"],["stream","n","小河；溪流","🏞️"],["stripe","n","條紋","🦓"],["striped","adj","有條紋的","🦓"],["student","n","學生","👨‍🎓"],["study","v","學習","📚"],["subject","n","主題；學科","📖"],["such","det","如此；這麼","👉"],["suddenly","adv","突然","⚡"],["sugar","n","糖","🍬"],["suitcase","n","小型旅行箱","🧳"],["summer","n","夏天","☀️"],["sunglasses","n","太陽眼鏡","🕶️"],["sure","adj","確定的","✅"],["surname","n","姓","🏷️"],["surprise","n","驚訝","😲"],["swan","n","天鵝","🦢"],["swing","n/v","鞦韆；搖擺","🛝"],
+["take","v","花費（時間）","⏱️"],["taste","n/v","味道；嚐","👅"],["taxi","n","計程車","🚕"],["team","n","隊；組；班","👥"],["telephone","n","電話","☎️"],["tent","n","帳篷","⛺"],["thank","v","感謝","🙏"],["theatre","n","劇院","🎭"],["thousand","n","千","🔢"],["through","prep","通過；穿越","➡️"],["tidy","adj/v","整齊的；整理","🧹"],["time","n","時間","⏰"],["timetable","n","時刻表","📋"],["toe","n","腳趾","🦶"],["together","adv","一起","🤝"],["tomorrow","adv/n","明天","🌅"],["tonight","adv/n","（在）今晚","🌙"],["torch","n","手電筒（英式）","🔦"],["tortoise","n","陸龜","🐢"],["touch","v","觸摸","👆"],["tour","n","參觀","🚌"],["traffic","n","交通流量","🚦"],["trainers","n","運動鞋","👟"],["tune","n","曲調；曲子；旋律","🎵"],["turn","v","轉動；翻動","🔄"],["turn off","v","關掉","🔌"],["turn on","v","打開","💡"],["twice","adv","兩次","2️⃣"],["tyre","n","輪胎","🛞"],
+["umbrella","n","雨傘","☂️"],["unfriendly","adj","不友好的","😠"],["unhappy","adj","不高興的","😢"],["uniform","n","制服","👔"],["university","n","大學","🎓"],["unkind","adj","不友善的","😾"],["untidy","adj","不整潔的","🌀"],["until","prep","直到…時","⏳"],["unusual","adj","不同尋常的","🦄"],["use","v","使用","🔧"],["usually","adv","通常地","🔁"],
+["view","n","觀點；景象","🏞️"],["violin","n","小提琴","🎻"],["visit","v","參觀","🏛️"],["volleyball","n","排球","🏐"],
+["waiter","n","男服務員","🤵"],["warm","adj","溫暖的","🌡️"],["way","n","道路","🛣️"],["west","n","西方","🧭"],["wheel","n","輪子","🛞"],["while","conj","在…的時候","⏳"],["whisper","v","小聲說話","🤫"],["whistle","v","吹口哨","😗"],["wife","n","妻子","👰"],["wifi","n","無線寬頻連線","📶"],["wild","adj","野生的","🦁"],["will","v","將要","🔮"],["William","n","威廉（人名）","👦"],["win","n/v","贏","🏆"],["wing","n","翅膀","🪽"],["winner","n","獲勝者","🥇"],["winter","n","冬天","❄️"],["wish","n/v","希望","🌠"],["without","prep","沒有","🚫"],["wonderful","adj","極好的","🤩"],["wood","n","木材","🪵"],["wool","n","羊毛","🐑"],["worried","adj","擔心的","😟"],
+["x-ray","n","X 光","🩻"],
+["yet","adv","仍然；還","⏳"],["yoghurt","n","優格","🥛"],["you're welcome!","excl","別客氣","😊"],
+["zero","n","零","0️⃣"],["twenty-first","","第二十一","21️⃣"],["twenty-second","","第二十二","22️⃣"],["twenty-third","","第二十三","23️⃣"],["twenty-fourth","","第二十四","24️⃣"],["twenty-fifth","","第二十五","25️⃣"],["twenty-sixth","","第二十六","26️⃣"],["twenty-seventh","","第二十七","27️⃣"],["twenty-eighth","","第二十八","28️⃣"],["twenty-ninth","","第二十九","29️⃣"],["thirtieth","","第三十","30️⃣"],["thirty-first","","第三十一","31️⃣"]
+];
+
+// ===== 音效（Web Audio 合成，不需外部檔案） =====
+let audioCtx = null;
+function tone(freq, t0, dur, vol=0.22){
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type='sine'; o.frequency.value=freq;
+  g.gain.setValueAtTime(0.0001, audioCtx.currentTime+t0);
+  g.gain.exponentialRampToValueAtTime(vol, audioCtx.currentTime+t0+0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+t0+dur);
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start(audioCtx.currentTime+t0); o.stop(audioCtx.currentTime+t0+dur+0.05);
+}
+function playSound(kind){
+  try{
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==='suspended') audioCtx.resume();
+    if(kind==='good'){ tone(523.25,0,0.14); tone(659.25,0.12,0.14); tone(783.99,0.24,0.22); }
+    else { tone(220,0,0.18,0.18); tone(174.61,0.16,0.26,0.18); }
+  }catch(e){}
+}
+
+// ===== 發音 =====
+function speak(text, lang){
+  if(!('speechSynthesis' in window)){ alert('此瀏覽器不支援語音功能'); return; }
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang; u.rate = 0.85;
+  const vs = speechSynthesis.getVoices().filter(v => v.lang && v.lang.toLowerCase().startsWith(lang.split('-')[0]));
+  if(vs.length) u.voice = vs[0];
+  speechSynthesis.speak(u);
+}
+if('speechSynthesis' in window) speechSynthesis.getVoices();
+
+
+// ===== 自動播放（念英文→中文，自動翻下一張） =====
+let autoMode = false, autoTimer = null, utterCount = 0;
+function speakCb(text, lang, cb){
+  if(!('speechSynthesis' in window)){ cb&&cb(); return; }
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang; u.rate = 0.85;
+  const vs = speechSynthesis.getVoices().filter(v => v.lang && v.lang.toLowerCase().startsWith(lang.split('-')[0]));
+  if(vs.length) u.voice = vs[0];
+  let done=false;
+  const fin=()=>{ if(!done){done=true; cb&&cb();} };
+  u.onend = fin; u.onerror = fin;
+  speechSynthesis.speak(u);
+  setTimeout(fin, Math.max(2500, text.length*250)); // 保險逾時
+}
+function clearAutoTimer(){ if(autoTimer){ clearTimeout(autoTimer); autoTimer=null; } }
+function toggleAuto(){
+  autoMode = !autoMode;
+  const b = document.getElementById('autoBtn');
+  b.classList.toggle('active', autoMode);
+  b.style.background = autoMode ? '#4a6cf7' : '';
+  b.style.color = autoMode ? '#fff' : '';
+  clearAutoTimer();
+  if(autoMode){ autoSpeakCurrent(); } else { speechSynthesis.cancel(); }
+}
+function autoSpeakCurrent(){
+  if(!autoMode) return;
+  const [w,,zh] = WORDS[deck[ci]];
+  flipped=false; document.getElementById('card').classList.remove('flipped');
+  speakCb(w,'en-US',()=>{ autoTimer=setTimeout(()=>{
+    if(!autoMode) return;
+    flipped=true; document.getElementById('card').classList.add('flipped');
+    speakCb(zh,'zh-TW',()=>{ autoTimer=setTimeout(()=>{
+      if(!autoMode) return;
+      ci=(ci+1)%deck.length; renderCard(); autoSpeakCurrent();
+    }, 700); });
+  }, 350); });
+}
+// 手動切換單字卡時也自動念出英文+中文
+function speakCardBoth(){
+  const [w,,zh] = WORDS[deck[ci]];
+  speechSynthesis.cancel();
+  speakCb(w,'en-US',()=>setTimeout(()=>speak(zh,'zh-TW'),250));
+}
+
+// ===== 單字卡 =====
+let deck = WORDS.map((w,i)=>i), ci = 0, flipped = false;
+function renderCard(){
+  const [w,pos,zh,em] = WORDS[deck[ci]];
+  document.getElementById('cardEmoji').textContent = em;
+  document.getElementById('cardEmojiBack').textContent = em;
+  document.getElementById('cardWord').textContent = w;
+  document.getElementById('cardPos').textContent = pos;
+  document.getElementById('cardZh').textContent = zh;
+  document.getElementById('cardCounter').textContent = (ci+1)+' / '+deck.length;
+  flipped = false;
+  document.getElementById('card').classList.remove('flipped');
+  logEvent('單字卡', w, zh, '');
+}
+function flipCard(){ flipped=!flipped; document.getElementById('card').classList.toggle('flipped',flipped); }
+function nextCard(){ ci=(ci+1)%deck.length; renderCard(); if(autoMode){ clearAutoTimer(); autoSpeakCurrent(); } else { speakCardBoth(); } }
+function prevCard(){ ci=(ci-1+deck.length)%deck.length; renderCard(); if(autoMode){ clearAutoTimer(); autoSpeakCurrent(); } else { speakCardBoth(); } }
+function shuffleCards(){ clearAutoTimer(); speechSynthesis.cancel(); for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]];} ci=0; renderCard(); if(autoMode) autoSpeakCurrent(); }
+function speakEn(){ speak(WORDS[deck[ci]][0], 'en-US'); }
+function speakZh(){ speak(WORDS[deck[ci]][2], 'zh-TW'); }
+(function(){
+  const row = document.getElementById('letterFilter');
+  const letters = ['全部',...new Set(WORDS.map(w=>w[0][0].toUpperCase()))];
+  letters.forEach(L=>{
+    const b=document.createElement('button'); b.textContent=L;
+    b.onclick=()=>{ row.querySelectorAll('button').forEach(x=>x.classList.remove('active')); b.classList.add('active');
+      deck = L==='全部' ? WORDS.map((w,i)=>i) : WORDS.map((w,i)=>i).filter(i=>WORDS[i][0][0].toUpperCase()===L);
+      ci=0; renderCard(); };
+    if(L==='全部') b.classList.add('active');
+    row.appendChild(b);
+  });
+})();
+
+// ===== 單字列表 =====
+let listLetter = '全部';
+(function(){
+  const row = document.getElementById('listLetterFilter');
+  const letters = ['全部',...new Set(WORDS.map(w=>w[0][0].toUpperCase()))];
+  letters.forEach(L=>{
+    const b=document.createElement('button'); b.textContent=L;
+    b.dataset.l=L;
+    b.onclick=()=>{ listLetter=L; row.querySelectorAll('button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); renderList(); };
+    if(L==='全部') b.classList.add('active');
+    row.appendChild(b);
+  });
+})();
+function renderList(){
+  const q = (document.getElementById('searchBox').value||'').trim().toLowerCase();
+  const grid = document.getElementById('wordGrid'); grid.innerHTML='';
+  WORDS.forEach(([w,pos,zh,em],i)=>{
+    if(listLetter!=='全部' && w[0].toUpperCase()!==listLetter) return;
+    if(q && !w.toLowerCase().includes(q) && !zh.includes(q)) return;
+    const d=document.createElement('div'); d.className='item';
+    d.innerHTML = '<div class="em">'+em+'</div><div class="wd">'+w+'</div><div class="ps">'+pos+'</div><div class="zw">'+zh+'</div>';
+    const row=document.createElement('div');
+    const b1=document.createElement('button'); b1.className='speak-btn sm'; b1.textContent='🔊EN'; b1.title='英文發音';
+    b1.onclick=()=>speak(w,'en-US');
+    const b2=document.createElement('button'); b2.className='speak-btn sm'; b2.textContent='🔊中'; b2.title='中文發音';
+    b2.onclick=()=>speak(zh,'zh-TW');
+    row.appendChild(b1); row.appendChild(b2);
+    d.appendChild(row);
+    grid.appendChild(d);
+  });
+  if(!grid.children.length) grid.innerHTML='<p style="grid-column:1/-1;text-align:center;color:#999;padding:30px">找不到符合的單字</p>';
+}
+
+// ===== 填空測驗（不顯示英文單字，挖空部分字母） =====
+let quizOrder = [], qi = 0, qScore = 0, qTotal = 0;
+let quizCount = 10, quizLetter = '隨機';
+
+document.getElementById('countRow').querySelectorAll('button').forEach(b=>{
+  b.onclick=()=>{ document.getElementById('countRow').querySelectorAll('button').forEach(x=>x.classList.remove('active')); b.classList.add('active');
+    quizCount = b.dataset.c==='all' ? 'all' : parseInt(b.dataset.c); updateSetupInfo(); };
+});
+(function(){
+  const row = document.getElementById('quizLetterRow');
+  const letters = ['隨機',...new Set(WORDS.map(w=>w[0][0].toUpperCase()))];
+  letters.forEach(L=>{
+    const b=document.createElement('button'); b.textContent=L;
+    b.onclick=()=>{ row.querySelectorAll('button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); quizLetter=L; updateSetupInfo(); };
+    if(L==='隨機') b.classList.add('active');
+    row.appendChild(b);
+  });
+})();
+function poolSize(){ return quizLetter==='隨機' ? WORDS.length : WORDS.filter(w=>w[0][0].toUpperCase()===quizLetter).length; }
+function updateSetupInfo(){
+  const n = quizCount==='all' ? poolSize() : Math.min(quizCount, poolSize());
+  document.getElementById('setupInfo').textContent = '範圍：' + (quizLetter==='隨機'?'全部字母':quizLetter+' 開頭') + '（共 '+poolSize()+' 個單字）｜將出 '+n+' 題';
+}
+function startQuiz(){
+  let pool = WORDS.map((w,i)=>i);
+  if(quizLetter!=='隨機') pool = pool.filter(i=>WORDS[i][0][0].toUpperCase()===quizLetter);
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  const n = quizCount==='all' ? pool.length : Math.min(quizCount, pool.length);
+  quizOrder = pool.slice(0,n); qi=0; qScore=0; qTotal=0;
+  document.getElementById('quizSetup').style.display='none';
+  document.getElementById('quizResult').style.display='none';
+  document.getElementById('quizMain').style.display='block';
+  buildQuiz();
+}
+function backToSetup(){
+  document.getElementById('quizSetup').style.display='block';
+  document.getElementById('quizResult').style.display='none';
+  document.getElementById('quizMain').style.display='none';
+  updateSetupInfo();
+}
+function buildQuiz(){
+  const idx = quizOrder[qi], [w,pos,zh] = WORDS[idx];
+  document.getElementById('quizZh').textContent = zh;
+  document.getElementById('quizPos').textContent = pos + '　（共 ' + w.replace(/[^a-zA-Z]/g,'').length + ' 個字母）';
+  const fb0=document.getElementById('quizFeedback'); fb0.textContent=''; fb0.className='feedback';
+  const box = document.getElementById('quizBlanks'); box.innerHTML='';
+  const chars = [...w];
+  const alpha = chars.map(c=>/[a-zA-Z]/.test(c));
+  const blank = chars.map((c,i)=>{
+    if(!alpha[i]) return false;
+    const prevAlpha = i>0 && alpha[i-1];
+    if(!prevAlpha) return false;
+    return Math.random() < 0.65;
+  });
+  if(!blank.some(b=>b)){ const cand = chars.map((c,i)=>alpha[i]&&(i>0&&alpha[i-1])?i:-1).filter(i=>i>=0); if(cand.length) blank[cand[0]]=true; }
+  chars.forEach((c,i)=>{
+    const span=document.createElement('span');
+    if(alpha[i]){
+      if(blank[i]){
+        span.className='ch';
+        const inp=document.createElement('input');
+        inp.maxLength=1; inp.dataset.ans=c.toLowerCase(); inp.autocomplete='off';
+        inp.oninput=()=>{ const nx=nextInput(inp); if(inp.value&&nx) nx.focus(); };
+        inp.onkeydown=e=>{ if(e.key==='Backspace'&&!inp.value){const pv=prevInput(inp); if(pv){pv.focus(); pv.value='';}} };
+        span.appendChild(inp);
+      } else { span.className='ch shown'; span.textContent=c; }
+    } else if(c===' '){ span.className='ch space'; }
+    else { span.className='ch punct'; span.textContent=c; }
+    box.appendChild(span);
+  });
+  const first=box.querySelector('input'); if(first) first.focus();
+  updateScore();
+}
+function nextInput(el){ const ins=[...document.querySelectorAll('#quizBlanks input')]; const i=ins.indexOf(el); return ins[i+1]||null; }
+function prevInput(el){ const ins=[...document.querySelectorAll('#quizBlanks input')]; const i=ins.indexOf(el); return ins[i-1]||null; }
+function updateScore(){ document.getElementById('quizScore').textContent = '得分：'+qScore+' / '+qTotal+'　｜　第 '+(qi+1)+' 題 / 共 '+quizOrder.length+' 題'; }
+function checkQuiz(){
+  const ins=[...document.querySelectorAll('#quizBlanks input')];
+  let allOk=true;
+  ins.forEach(inp=>{
+    const ok = inp.value.trim().toLowerCase()===inp.dataset.ans;
+    inp.classList.toggle('ok',ok); inp.classList.toggle('bad',!ok);
+    if(!ok) allOk=false;
+  });
+  qTotal++;
+  const fb=document.getElementById('quizFeedback');
+  if(allOk){ qScore++; fb.textContent='🎉 答對了！'; fb.className='feedback good'; playSound('good'); }
+  else { fb.textContent='再試試看，紅色的格子有錯喔！'; fb.className='feedback bad'; playSound('bad'); }
+  const qw=WORDS[quizOrder[qi]]; logEvent('填空測驗', qw[0], qw[2], allOk?'✅ 答對':'❌ 答錯');
+  updateScore();
+}
+function revealQuiz(){
+  const [w] = WORDS[quizOrder[qi]];
+  document.querySelectorAll('#quizBlanks input').forEach(inp=>{ inp.value=inp.dataset.ans; inp.classList.remove('bad'); inp.classList.add('ok'); });
+  const fb=document.getElementById('quizFeedback');
+  fb.textContent='答案：'+w; fb.className='feedback';
+  speak(w,'en-US');
+}
+function quizHint(){ speak(WORDS[quizOrder[qi]][0],'en-US'); }
+function nextQuiz(){
+  qi++;
+  if(qi>=quizOrder.length){ showResult(); return; }
+  buildQuiz();
+}
+function showResult(){
+  document.getElementById('quizMain').style.display='none';
+  document.getElementById('quizResult').style.display='block';
+  const pct = quizOrder.length ? Math.round(qScore/quizOrder.length*100) : 0;
+  let praise = pct>=90 ? '🌟 太厲害了！' : pct>=70 ? '👏 很棒！' : pct>=50 ? '💪 繼續加油！' : '📖 多多練習喔！';
+  document.getElementById('resultText').innerHTML = '測驗結束！<br>得分：'+qScore+' / '+quizOrder.length+'（'+pct+' 分）<br>'+praise;
+}
+
+
+// ===== 學習歷程（localStorage 持久保存） =====
+const HIST_KEY = 'flyersHistory';
+function getHist(){ try{ return JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); }catch(e){ return []; } }
+function saveHist(h){ try{ localStorage.setItem(HIST_KEY, JSON.stringify(h.slice(-2000))); }catch(e){} }
+function nowStr(){ const d=new Date(); const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds()); }
+function logEvent(type, word, zh, result){
+  const h=getHist(); h.push({t:nowStr(), type, word, zh, result}); saveHist(h);
+}
+function renderHistory(){
+  const h=getHist();
+  const cardViews=h.filter(e=>e.type==='單字卡');
+  const quiz=h.filter(e=>e.type==='填空測驗');
+  const uniqWords=new Set(cardViews.map(e=>e.word)).size;
+  const correct=quiz.filter(e=>e.result==='✅ 答對').length;
+  const rate=quiz.length?Math.round(correct/quiz.length*100):0;
+  document.getElementById('histSummary').innerHTML =
+    '<div class="stat-card"><div class="num">'+cardViews.length+'</div><div class="lbl">看過單字（次）</div></div>'+
+    '<div class="stat-card"><div class="num">'+uniqWords+'</div><div class="lbl">不重複單字（個）</div></div>'+
+    '<div class="stat-card"><div class="num">'+quiz.length+'</div><div class="lbl">做過測驗（題）</div></div>'+
+    '<div class="stat-card"><div class="num">'+rate+'%</div><div class="lbl">測驗答對率</div></div>';
+  const body=document.getElementById('histBody'); body.innerHTML='';
+  const recent=h.slice(-300).reverse();
+  recent.forEach(e=>{
+    const tr=document.createElement('tr');
+    [e.t,e.type,e.word,e.zh,e.result||''].forEach(v=>{ const td=document.createElement('td'); td.textContent=v; tr.appendChild(td); });
+    body.appendChild(tr);
+  });
+  if(!recent.length) body.innerHTML='<tr><td colspan="5" style="padding:30px;color:#999">尚無學習紀錄，快去看單字卡或做測驗吧！</td></tr>';
+}
+function histToRows(){
+  const h=getHist();
+  return [['時間','類型','英文','中文','結果'], ...h.map(e=>[e.t,e.type,e.word,e.zh,e.result||''])];
+}
+function downloadFile(content, filename, mime){
+  let url, revoke=false;
+  try{
+    const blob=new Blob([content],{type:mime});
+    url=URL.createObjectURL(blob); revoke=true;
+  }catch(e){
+    url='data:'+mime+','+encodeURIComponent(content);
+  }
+  // 1) 嘗試自動觸發下載
+  try{
+    const a=document.createElement('a');
+    a.href=url; a.download=filename; a.style.display='none';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ if(a.parentNode) a.parentNode.removeChild(a); },3000);
+  }catch(e){}
+  // 2) 顯示下載提示列（Android Chrome 可點擊或長按另存）
+  const bar=document.getElementById('dlBar');
+  bar.innerHTML='';
+  const link=document.createElement('a');
+  link.href=url; link.download=filename;
+  link.textContent='📥 '+filename;
+  const close=document.createElement('button');
+  close.textContent='✕';
+  close.onclick=()=>{ bar.style.display='none'; if(revoke) URL.revokeObjectURL(url); };
+  const tip=document.createElement('div'); tip.className='tip';
+  tip.textContent='若未自動下載：點上方連結，或「長按連結 → 下載連結」即可儲存';
+  bar.appendChild(link); bar.appendChild(close); bar.appendChild(tip);
+  bar.style.display='flex';
+  setTimeout(()=>{ if(bar.style.display==='flex' && revoke) URL.revokeObjectURL(url); },60000);
+}
+function downloadCSV(){
+  const rows=histToRows();
+  const csv='﻿'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  downloadFile(csv, '學習歷程_'+nowStr().replace(/[: ]/g,'-')+'.csv', 'text/csv;charset=utf-8');
+}
+function downloadTXT(){
+  const rows=histToRows();
+  const txt=rows.map(r=>r.join(' | ')).join('\r\n');
+  downloadFile(txt, '學習歷程_'+nowStr().replace(/[: ]/g,'-')+'.txt', 'text/plain;charset=utf-8');
+}
+function clearHistory(){
+  if(confirm('確定要清除所有學習紀錄嗎？此動作無法復原。')){ saveHist([]); renderHistory(); }
+}
+
+function switchMode(m){
+  ['card','list','quiz','history'].forEach(k=>{
+    document.getElementById('tab'+k[0].toUpperCase()+k.slice(1)).classList.toggle('active',m===k);
+    document.getElementById(k+'Panel').style.display = m===k?'block':'none';
+  });
+  document.getElementById('arrowL').style.display = m==='card'?'block':'none';
+  document.getElementById('arrowR').style.display = m==='card'?'block':'none';
+  if(m!=='card' && autoMode){ toggleAuto(); }
+  if(m==='list') renderList();
+  if(m==='history') renderHistory();
+}
+renderCard();
+updateSetupInfo();
+document.getElementById('arrowL').style.display='block';
+document.getElementById('arrowR').style.display='block';
+</script>
+</body>
+</html>
